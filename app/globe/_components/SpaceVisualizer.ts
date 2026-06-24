@@ -237,3 +237,118 @@ export function setupConstellations(
   viewer.dataSources.add(ds);
   return ds;
 }
+
+export interface SatelliteData {
+  name: string;
+  status: string;
+  type: string;
+  inclination: number; // degrees
+  altitude: number; // meters
+  phaseOffset: number; // radians
+  period: number; // seconds
+}
+
+export const SATELLITES_LIST: SatelliteData[] = [
+  { name: "Starlink-1042", status: "Active", type: "Communications", inclination: 53.2, altitude: 550000, phaseOffset: 0.1, period: 95 * 60 },
+  { name: "Starlink-2215", status: "Active", type: "Communications", inclination: 53.2, altitude: 550000, phaseOffset: 0.8, period: 95 * 60 },
+  { name: "Starlink-3091", status: "Active", type: "Communications", inclination: 53.2, altitude: 550000, phaseOffset: 1.5, period: 95 * 60 },
+  { name: "Starlink-4120", status: "Active", type: "Communications", inclination: 53.2, altitude: 550000, phaseOffset: 2.2, period: 95 * 60 },
+  { name: "NOAA-19", status: "Active", type: "Weather / Earth Obs", inclination: 99.2, altitude: 870000, phaseOffset: 0.5, period: 102 * 60 },
+  { name: "NOAA-20", status: "Active", type: "Weather / Earth Obs", inclination: 98.7, altitude: 824000, phaseOffset: 1.8, period: 101 * 60 },
+  { name: "GPS IIF-12", status: "Active", type: "Navigation / GPS", inclination: 55.0, altitude: 20200000, phaseOffset: 0.2, period: 12 * 3600 },
+  { name: "GPS IIR-10", status: "Active", type: "Navigation / GPS", inclination: 55.0, altitude: 20200000, phaseOffset: 1.1, period: 12 * 3600 },
+  { name: "Galileo-24", status: "Active", type: "Navigation / GPS", inclination: 56.0, altitude: 23222000, phaseOffset: 2.5, period: 14 * 3600 },
+  { name: "Hubble Space Telescope", status: "Active", type: "Research / Telescope", inclination: 28.5, altitude: 540000, phaseOffset: 3.1, period: 95 * 60 },
+  { name: "ISS (Zarya)", status: "Active", type: "Space Station", inclination: 51.6, altitude: 418000, phaseOffset: 0.0, period: 92.8 * 60 },
+  { name: "Aqua", status: "Active", type: "Climate Research", inclination: 98.2, altitude: 705000, phaseOffset: 0.9, period: 99 * 60 },
+  { name: "Terra", status: "Active", type: "Climate Research", inclination: 98.2, altitude: 705000, phaseOffset: 2.7, period: 99 * 60 },
+  { name: "Envisat", status: "Inactive", type: "Space Debris", inclination: 98.5, altitude: 790000, phaseOffset: 4.2, period: 100 * 60 },
+  { name: "Iridium-105", status: "Active", type: "Communications", inclination: 86.4, altitude: 780000, phaseOffset: 1.0, period: 100 * 60 },
+  { name: "Iridium-132", status: "Active", type: "Communications", inclination: 86.4, altitude: 780000, phaseOffset: 2.1, period: 100 * 60 },
+  { name: "Sentinel-1A", status: "Active", type: "Radar Earth Obs", inclination: 98.18, altitude: 693000, phaseOffset: 0.3, period: 98.6 * 60 },
+  { name: "Sentinel-2B", status: "Active", type: "Optical Earth Obs", inclination: 98.62, altitude: 786000, phaseOffset: 1.4, period: 100.6 * 60 },
+  { name: "Landsat 8", status: "Active", type: "Land Observatory", inclination: 98.2, altitude: 705000, phaseOffset: 3.5, period: 99 * 60 },
+  { name: "GOES-16", status: "Active", type: "Geostationary Weather", inclination: 0.0, altitude: 35786000, phaseOffset: 1.2, period: 24 * 3600 },
+  { name: "Himawari-9", status: "Active", type: "Geostationary Weather", inclination: 0.0, altitude: 35786000, phaseOffset: 2.8, period: 24 * 3600 },
+  { name: "Oneweb-0124", status: "Active", type: "Communications", inclination: 87.9, altitude: 1200000, phaseOffset: 0.4, period: 109 * 60 },
+  { name: "Oneweb-0235", status: "Active", type: "Communications", inclination: 87.9, altitude: 1200000, phaseOffset: 1.6, period: 109 * 60 },
+  { name: "Tiangong Space Station", status: "Active", type: "Space Station", inclination: 41.5, altitude: 389000, phaseOffset: 2.9, period: 92 * 60 },
+];
+
+export function setupRadarSatellites(
+  viewer: CesiumNS.Viewer,
+  Cesium: typeof CesiumNS
+): CesiumNS.CustomDataSource {
+  const ds = new Cesium.CustomDataSource("RADAR_SATELLITES");
+  const earthRadius = Cesium.Ellipsoid.WGS84.maximumRadius;
+
+  const startTime = viewer.clock.currentTime;
+
+  SATELLITES_LIST.forEach((sat) => {
+    const radius = earthRadius + sat.altitude;
+    const inclinationRad = Cesium.Math.toRadians(sat.inclination);
+    
+    // Draw orbit path polyline
+    const orbitPositions: CesiumNS.Cartesian3[] = [];
+    const numSegments = 90; // optimized segments
+    for (let i = 0; i <= numSegments; i++) {
+      const angle = Cesium.Math.TWO_PI * (i / numSegments);
+      const x = radius * Math.cos(angle + sat.phaseOffset);
+      const y = radius * Math.sin(angle + sat.phaseOffset) * Math.cos(inclinationRad);
+      const z = radius * Math.sin(angle + sat.phaseOffset) * Math.sin(inclinationRad);
+      orbitPositions.push(new Cesium.Cartesian3(x, y, z));
+    }
+
+    ds.entities.add({
+      name: `${sat.name} Orbit`,
+      polyline: {
+        positions: orbitPositions,
+        width: 1,
+        material: Cesium.Color.CYAN.withAlpha(0.08),
+        arcType: Cesium.ArcType.NONE,
+      },
+    });
+
+    // Create sampled position property for animated motion
+    const positionProperty = new Cesium.SampledPositionProperty();
+    for (let t = 0; t <= 86400; t += 300) {
+      const time = Cesium.JulianDate.addSeconds(startTime, t, new Cesium.JulianDate());
+      const angle = Cesium.Math.TWO_PI * (t / sat.period) + sat.phaseOffset;
+      const x = radius * Math.cos(angle);
+      const y = radius * Math.sin(angle) * Math.cos(inclinationRad);
+      const z = radius * Math.sin(angle) * Math.sin(inclinationRad);
+      positionProperty.addSample(time, new Cesium.Cartesian3(x, y, z));
+    }
+
+    const satEntity = ds.entities.add({
+      id: `sat-${sat.name}`,
+      name: sat.name,
+      position: positionProperty,
+      point: {
+        pixelSize: 6,
+        color: sat.type.includes("Communications") ? Cesium.Color.SKYBLUE : 
+               sat.type.includes("Weather") ? Cesium.Color.LIGHTGREEN :
+               sat.type.includes("Navigation") ? Cesium.Color.GOLD :
+               sat.type.includes("Space Station") ? Cesium.Color.DEEPPINK :
+               Cesium.Color.WHITE,
+        outlineColor: Cesium.Color.BLACK,
+        outlineWidth: 1.5,
+      },
+      label: {
+        text: sat.name,
+        font: "9px monospace",
+        fillColor: Cesium.Color.LIGHTGRAY,
+        style: Cesium.LabelStyle.FILL,
+        pixelOffset: new Cesium.Cartesian2(0, 10),
+        scaleByDistance: new Cesium.NearFarScalar(1.0e6, 1.0, 3.0e7, 0.25),
+        translucencyByDistance: new Cesium.NearFarScalar(1.0e6, 1.0, 1.0e7, 0.0),
+      },
+    });
+
+    // Attach custom metadata
+    (satEntity as any).customData = sat;
+  });
+
+  viewer.dataSources.add(ds);
+  return ds;
+}

@@ -95,15 +95,36 @@ export default function GlobePage() {
   useEffect(() => {
     let cancelled = false;
 
+    // Load Cesium from CDN via a script tag — bypasses Turbopack bundling
+    // entirely, which avoids silent hangs in production builds on Vercel.
+    function loadCesiumFromCDN(): Promise<typeof CesiumNS> {
+      return new Promise((resolve, reject) => {
+        const win = window as unknown as { Cesium?: typeof CesiumNS };
+        if (win.Cesium) { resolve(win.Cesium); return; }
+
+        // Must be set BEFORE the script executes
+        (window as unknown as Record<string, unknown>).CESIUM_BASE_URL =
+          "https://cdn.jsdelivr.net/npm/cesium@1.142.0/Build/Cesium/";
+
+        const script = document.createElement("script");
+        script.src =
+          "https://cdn.jsdelivr.net/npm/cesium@1.142.0/Build/Cesium/Cesium.js";
+        script.async = true;
+        script.onload = () => {
+          const w = window as unknown as { Cesium?: typeof CesiumNS };
+          if (w.Cesium) resolve(w.Cesium);
+          else reject(new Error("Cesium loaded but window.Cesium is undefined"));
+        };
+        script.onerror = () =>
+          reject(new Error("Failed to load Cesium.js from CDN — check network"));
+        document.head.appendChild(script);
+      });
+    }
+
     async function init() {
       try {
-      // Point Cesium at the CDN so Workers/Assets/Widgets resolve correctly
-      // on ALL environments (Vercel, local, etc.) without needing /public/cesium/
-      (window as unknown as Record<string, unknown>).CESIUM_BASE_URL =
-        "https://cdn.jsdelivr.net/npm/cesium@1.142.0/Build/Cesium/";
-
-      const Cesium = await import("cesium");
-      if (cancelled || !containerRef.current) return;
+      const Cesium = await loadCesiumFromCDN();
+      if (cancelled || !containerRef.current) { setIsLoading(false); return; }
 
       const token = process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN;
       if (token) {

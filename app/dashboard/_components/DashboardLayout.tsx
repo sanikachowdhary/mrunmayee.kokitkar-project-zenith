@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { fetchTelemetryData, type TelemetryData } from "./lib/api-mock";
+import { fetchISSPosition, fetchSatellites, generateLocalTelemetryMock, type ISSData, type SatelliteProxyData } from "./lib/real-api";
 import { VisiblePlanetsCard } from "./cards/VisiblePlanetsCard";
 import { ISSPositionCard } from "./cards/ISSPositionCard";
 import { ActiveSatellitesCard } from "./cards/ActiveSatellitesCard";
@@ -12,17 +12,29 @@ import { LocationSearch } from "../../components/LocationSearch";
 export function DashboardLayout() {
   const [lat, setLat] = useState(19.0760); // Default Mumbai
   const [lng, setLng] = useState(72.8777);
+  const [issData, setIssData] = useState<ISSData | null>(null);
+  const [satData, setSatData] = useState<SatelliteProxyData | null>(null);
+  const [localData, setLocalData] = useState<ReturnType<typeof generateLocalTelemetryMock> | null>(null);
   
-  const [data, setData] = useState<TelemetryData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Initial load & Location-based data
   useEffect(() => {
     let active = true;
     setLoading(true);
     
-    fetchTelemetryData(lat, lng).then((res) => {
-      if (active) {
-        setData(res);
+    // Update local deterministic data
+    setLocalData(generateLocalTelemetryMock(lat, lng));
+
+    // Fetch initial satellite data (this doesn't change frequently)
+    fetchSatellites().then(res => {
+      if (active && res) setSatData(res);
+    });
+
+    // Initial ISS fetch
+    fetchISSPosition().then(res => {
+      if (active && res) {
+        setIssData(res);
         setLoading(false);
       }
     });
@@ -30,9 +42,24 @@ export function DashboardLayout() {
     return () => { active = false; };
   }, [lat, lng]);
 
+  // ISS Live Polling (every 5 seconds)
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const freshISS = await fetchISSPosition();
+      if (freshISS) setIssData(freshISS);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const handleManualRefresh = () => {
     setLoading(true);
-    fetchTelemetryData(lat, lng).then(setData).finally(() => setLoading(false));
+    setLocalData(generateLocalTelemetryMock(lat, lng));
+    
+    Promise.all([
+      fetchISSPosition().then(res => { if (res) setIssData(res); }),
+      fetchSatellites().then(res => { if (res) setSatData(res); })
+    ]).finally(() => setLoading(false));
   };
 
   return (
@@ -66,11 +93,11 @@ export function DashboardLayout() {
 
       {/* ── Dashboard Grid ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <CosmicTwinScore score={data?.twinScore} loading={loading} />
-        <ObservationConditions data={data?.weather} loading={loading} />
-        <VisiblePlanetsCard data={data?.visiblePlanets} loading={loading} />
-        <ISSPositionCard data={data?.issPosition} loading={loading} />
-        <ActiveSatellitesCard count={data?.activeSatellites} loading={loading} />
+        <CosmicTwinScore score={localData?.twinScore} loading={loading} />
+        <ObservationConditions data={localData?.weather} loading={loading} />
+        <VisiblePlanetsCard data={localData?.visiblePlanets} loading={loading} />
+        <ISSPositionCard data={issData || undefined} loading={loading} />
+        <ActiveSatellitesCard data={satData} loading={loading} />
       </div>
 
     </div>

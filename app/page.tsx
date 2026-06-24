@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, useScroll, useTransform, AnimatePresence, type Variants } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { LocationSearch as DynamicLocationSearch } from "./components/LocationSearch";
 
 /* ------------------------------------------------------------------ */
 /*  Starfield                                                          */
@@ -211,56 +213,18 @@ function GlassCard({
 /* ------------------------------------------------------------------ */
 
 function LocationSearch() {
-  const [value, setValue] = useState("");
-  const [focused, setFocused] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    inputRef.current?.blur();
-  };
+  const router = useRouter();
 
   return (
-    <form onSubmit={handleSubmit} className="w-full">
-      <motion.div
-        animate={{
-          boxShadow: focused
-            ? "0 0 0 1px rgba(125,180,255,0.45), 0 0 40px rgba(80,140,255,0.18)"
-            : "0 0 0 1px rgba(255,255,255,0.08), 0 0 0px rgba(80,140,255,0)",
-        }}
-        transition={{ duration: 0.35 }}
-        className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.05] px-5 py-4 backdrop-blur-xl sm:px-6"
-      >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          className="shrink-0 text-slate-400"
-        >
-          <path
-            d="M12 21s7-6.1 7-11.6A7 7 0 0 0 5 9.4C5 14.9 12 21 12 21Z"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinejoin="round"
-          />
-          <circle cx="12" cy="9.5" r="2.4" stroke="currentColor" strokeWidth="1.6" />
-        </svg>
-        <input
-          ref={inputRef}
-          type="text"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          placeholder="Enter a city, coordinates, or observation site"
-          className="w-full bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none sm:text-base"
-        />
-        <span className="hidden shrink-0 rounded-full border border-white/10 px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-slate-500 sm:block">
-          Lat / Long
-        </span>
-      </motion.div>
-    </form>
+    <div className="w-full">
+      <DynamicLocationSearch 
+        onLocationSelect={(lat, lng) => {
+          // You could pass lat/lng as URL params here if Dashboard supported it.
+          // For now, redirecting to the Intelligence Layer.
+          router.push("/dashboard");
+        }} 
+      />
+    </div>
   );
 }
 

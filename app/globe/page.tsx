@@ -73,6 +73,7 @@ export default function GlobePage() {
   const interactionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selected, setSelected] = useState<GeographicCoordinate | null>(null);
   const [autoRotate, setAutoRotate] = useState(true);
   const [rotationSpeed, setRotationSpeed] = useState(0.04); // radians per second (~2.3 deg/sec)
@@ -95,9 +96,11 @@ export default function GlobePage() {
     let cancelled = false;
 
     async function init() {
-      // MUST be set before Cesium is imported — tells the library where
-      // its Workers/, Assets/, Widgets/, and ThirdParty/ folders live.
-      (window as unknown as Record<string, unknown>).CESIUM_BASE_URL = "/cesium";
+      try {
+      // Point Cesium at the CDN so Workers/Assets/Widgets resolve correctly
+      // on ALL environments (Vercel, local, etc.) without needing /public/cesium/
+      (window as unknown as Record<string, unknown>).CESIUM_BASE_URL =
+        "https://cdn.jsdelivr.net/npm/cesium@1.142.0/Build/Cesium/";
 
       const Cesium = await import("cesium");
       if (cancelled || !containerRef.current) return;
@@ -246,6 +249,11 @@ export default function GlobePage() {
       cesiumRef.current = Cesium;
       viewerRef.current = viewer;
       setIsLoading(false);
+      } catch (err) {
+        console.error("Cesium init failed:", err);
+        setLoadError(err instanceof Error ? err.message : String(err));
+        setIsLoading(false);
+      }
     }
 
     init();
@@ -384,20 +392,30 @@ export default function GlobePage() {
       />
 
       {/* ── Loading Overlay ── */}
-      {isLoading && (
+      {(isLoading || loadError) && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-[#03040a] transition-opacity duration-700">
-          <div className="relative h-16 w-16">
-            <span className="absolute inset-0 animate-spin rounded-full border-2 border-sky-500/10 border-t-sky-400" />
-            <span className="absolute inset-2 rounded-full bg-sky-400/5 blur-md" />
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <p className="font-mono text-xs uppercase tracking-[0.3em] text-slate-300">
-              Initializing Earth Render
-            </p>
-            <p className="font-mono text-[10px] tracking-widest text-slate-500">
-              Project Zenith &middot; Loading 3D Engine
-            </p>
-          </div>
+          {loadError ? (
+            <div className="flex flex-col items-center gap-3 px-6 text-center">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01" strokeLinecap="round"/></svg>
+              <p className="font-mono text-xs uppercase tracking-[0.2em] text-red-400">Globe Failed to Load</p>
+              <p className="font-mono text-[10px] text-slate-500 max-w-xs">{loadError}</p>
+            </div>
+          ) : (
+            <>
+              <div className="relative h-16 w-16">
+                <span className="absolute inset-0 animate-spin rounded-full border-2 border-sky-500/10 border-t-sky-400" />
+                <span className="absolute inset-2 rounded-full bg-sky-400/5 blur-md" />
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <p className="font-mono text-xs uppercase tracking-[0.3em] text-slate-300">
+                  Initializing Earth Render
+                </p>
+                <p className="font-mono text-[10px] tracking-widest text-slate-500">
+                  Project Zenith &middot; Loading 3D Engine
+                </p>
+              </div>
+            </>
+          )}
         </div>
       )}
 

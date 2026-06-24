@@ -5,7 +5,6 @@ import { motion, useScroll, useTransform, AnimatePresence, type Variants } from 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LocationSearch as DynamicLocationSearch } from "./components/LocationSearch";
-import { useTheme } from "./components/ThemeProvider";
 
 /* ------------------------------------------------------------------ */
 /*  Animated Particle Canvas                                           */
@@ -13,7 +12,6 @@ import { useTheme } from "./components/ThemeProvider";
 
 function ParticleBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { theme } = useTheme();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -22,7 +20,7 @@ function ParticleBackground() {
     if (!ctx) return;
 
     let animId: number;
-    const isDark = theme === "dark";
+    const isDark = true;
 
     const resize = () => {
       canvas.width = window.innerWidth;
@@ -54,9 +52,7 @@ function ParticleBackground() {
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = isDark
-          ? `rgba(255,255,255,${p.alpha})`
-          : `rgba(15,40,100,${p.alpha * 0.35})`;
+        ctx.fillStyle = `rgba(255,255,255,${p.alpha})`;
         ctx.fill();
       }
       animId = requestAnimationFrame(draw);
@@ -67,7 +63,7 @@ function ParticleBackground() {
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", resize);
     };
-  }, [theme]);
+  }, []);
 
   return (
     <canvas
@@ -83,10 +79,7 @@ function ParticleBackground() {
 
 function ShootingStars() {
   const [streaks, setStreaks] = useState<{ id: number; top: number; left: number }[]>([]);
-  const { theme } = useTheme();
-
   useEffect(() => {
-    if (theme === "light") return;
     const interval = setInterval(() => {
       setStreaks(prev => [
         ...prev.slice(-2),
@@ -94,7 +87,7 @@ function ShootingStars() {
       ]);
     }, 4500);
     return () => clearInterval(interval);
-  }, [theme]);
+  }, []);
 
   return (
     <div className="pointer-events-none fixed inset-0 -z-[5] overflow-hidden">
@@ -135,7 +128,6 @@ const fadeUp: Variants = {
 
 function TelemetryBar() {
   const [time, setTime] = useState("");
-  const { theme } = useTheme();
 
   useEffect(() => {
     const tick = () =>
@@ -173,8 +165,7 @@ function TelemetryBar() {
 /* ------------------------------------------------------------------ */
 
 function OrbitRings() {
-  const { theme } = useTheme();
-  const opacity = theme === "dark" ? 0.08 : 0.06;
+  const opacity = 0.08;
   return (
     <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden">
       {[400, 600, 800, 1050].map((size, i) => (
@@ -186,7 +177,7 @@ function OrbitRings() {
           style={{
             width: size,
             height: size,
-            borderColor: theme === "dark" ? `rgba(56,189,248,${opacity})` : `rgba(2,132,199,${opacity})`,
+            borderColor: `rgba(56,189,248,${opacity})`,
           }}
         />
       ))}
@@ -249,7 +240,6 @@ const FEATURES = [
 ] as const;
 
 function FeatureCard({ f, i }: { f: (typeof FEATURES)[number]; i: number }) {
-  const { theme } = useTheme();
   return (
     <motion.div
       custom={i}
@@ -325,9 +315,6 @@ function LocationSearchWrapper() {
 /* ------------------------------------------------------------------ */
 
 export default function Page() {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
-
   return (
     <main className="relative min-h-screen overflow-x-hidden" style={{ color: "var(--foreground)" }}>
       <ParticleBackground />
@@ -349,7 +336,7 @@ export default function Page() {
             className="mb-6 inline-flex items-center gap-2 rounded-full border px-4 py-1.5"
             style={{
               borderColor: "var(--border-strong)",
-              backgroundColor: isDark ? "rgba(56,189,248,0.05)" : "rgba(2,132,199,0.05)",
+              backgroundColor: "rgba(56,189,248,0.05)",
             }}
           >
             <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse" />
@@ -369,9 +356,7 @@ export default function Page() {
             <span
               className="block"
               style={{
-                background: isDark
-                  ? "linear-gradient(135deg, #fff 30%, #93c5fd 60%, #a78bfa)"
-                  : "linear-gradient(135deg, #0f172a 30%, #0284c7 60%, #7c3aed)",
+                background: "linear-gradient(135deg, #fff 30%, #93c5fd 60%, #a78bfa)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
@@ -382,9 +367,7 @@ export default function Page() {
             <span
               className="block"
               style={{
-                background: isDark
-                  ? "linear-gradient(135deg, #38bdf8, #818cf8 50%, #c084fc)"
-                  : "linear-gradient(135deg, #0284c7, #6d28d9)",
+                background: "linear-gradient(135deg, #38bdf8, #818cf8 50%, #c084fc)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
@@ -432,11 +415,9 @@ export default function Page() {
                 whileTap={{ scale: 0.97 }}
                 className="relative overflow-hidden rounded-full px-8 py-3.5 text-sm font-semibold tracking-wide shadow-lg cursor-pointer"
                 style={{
-                  background: isDark
-                    ? "linear-gradient(135deg, #38bdf8, #818cf8)"
-                    : "linear-gradient(135deg, #0284c7, #6d28d9)",
+                  background: "linear-gradient(135deg, #38bdf8, #818cf8)",
                   color: "#fff",
-                  boxShadow: `0 0 40px ${isDark ? "rgba(56,189,248,0.3)" : "rgba(2,132,199,0.3)"}`,
+                  boxShadow: `0 0 40px rgba(56,189,248,0.3)`,
                 }}
               >
                 <span className="relative z-10 flex items-center gap-2">
@@ -531,9 +512,7 @@ export default function Page() {
             Everything overhead,{" "}
             <span
               style={{
-                background: isDark
-                  ? "linear-gradient(135deg, #38bdf8, #a78bfa)"
-                  : "linear-gradient(135deg, #0284c7, #7c3aed)",
+                background: "linear-gradient(135deg, #38bdf8, #a78bfa)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
@@ -560,16 +539,14 @@ export default function Page() {
             className="relative overflow-hidden rounded-3xl border p-12 sm:p-16"
             style={{
               borderColor: "var(--border-strong)",
-              background: isDark
-                ? "linear-gradient(135deg, rgba(15,23,42,0.8), rgba(30,10,60,0.6))"
-                : "linear-gradient(135deg, rgba(255,255,255,0.9), rgba(219,234,254,0.8))",
+              background: "linear-gradient(135deg, rgba(15,23,42,0.8), rgba(30,10,60,0.6))",
               backdropFilter: "blur(24px)",
             }}
           >
             {/* Glow */}
             <div
               className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 h-40 w-80 rounded-full blur-3xl"
-              style={{ background: isDark ? "rgba(56,189,248,0.08)" : "rgba(2,132,199,0.08)" }}
+              style={{ background: "rgba(56,189,248,0.08)" }}
             />
             <div className="relative z-10">
               <div className="mb-4 text-4xl">🌌</div>

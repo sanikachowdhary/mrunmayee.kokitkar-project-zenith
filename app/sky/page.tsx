@@ -580,7 +580,7 @@ export default function SkyTimeMachine() {
               <div className="relative z-10 flex items-center justify-between mb-3">
                 <div>
                   <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500">
-                    Temporal Offset Scrubber
+                    Temporal Offset
                   </p>
                   <motion.p
                     key={offsetYears}

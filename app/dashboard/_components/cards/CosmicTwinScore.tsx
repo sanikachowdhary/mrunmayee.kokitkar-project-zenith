@@ -19,7 +19,7 @@ export function CosmicTwinScore({ score, loading, lastUpdated }: { score?: numbe
 
   return (
     <TelemetryCard 
-      title="Cosmic Twin Score" 
+      title="Cosmic Twin Suitability" 
       loading={loading} 
       delay={0.5}
       lastUpdated={lastUpdated}
@@ -60,9 +60,9 @@ export function CosmicTwinScore({ score, loading, lastUpdated }: { score?: numbe
         </div>
 
         <div className="flex-1 text-center md:text-left">
-          <h4 className="font-sans text-sm font-medium text-slate-200 mb-1">Observation Suitability</h4>
+          <h4 className="font-sans text-sm font-medium text-slate-200 mb-1">Estimated Observation Quality</h4>
           <p className="font-sans text-xs text-slate-400 max-w-sm">
-            This proprietary metric aggregates cloud cover, atmospheric seeing, and celestial object visibility into a single score. A score above 75 indicates prime observation conditions.
+            Derived from live cloud cover and atmospheric visibility estimates. This score is an observational suitability index, not a precise telescope measurement.
           </p>
           {score !== undefined && (
             <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/5 bg-white/5 px-3 py-1">

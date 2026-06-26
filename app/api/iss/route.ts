@@ -4,7 +4,7 @@ export const revalidate = 0; // Do not cache, we want live polling
 
 export async function GET() {
   try {
-    const res = await fetch("http://api.open-notify.org/iss-now.json", {
+    const res = await fetch("https://api.open-notify.org/iss-now.json", {
       cache: "no-store"
     });
 

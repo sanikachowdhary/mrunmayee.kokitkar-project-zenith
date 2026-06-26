@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   fetchISSPosition,
   fetchSatellites,
   fetchHorizons,
+  fetchObservationConditions,
+  estimateVisiblePlanets,
+  estimateTwinScore,
   generateLocalTelemetryMock,
   getZenithObject,
   type ISSData,
@@ -25,6 +28,7 @@ const FALLBACK_DATA = generateLocalTelemetryMock(19.076, 72.8777);
 
 function DashboardContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { latitude, longitude, locationName, setLocation } = useLocationStore();
   const lastUpdated = useLiveTimestamp(5000);
 
@@ -38,6 +42,8 @@ function DashboardContent() {
   const [cachedAt, setCachedAt] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
   const [zenithObject, setZenithObject] = useState("Jupiter");
+  const requestIdRef = useRef(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     hydrateLocationStore();
@@ -73,6 +79,14 @@ function DashboardContent() {
   }, [searchParams, setLocation]);
 
   const loadData = useCallback(async (showSpinner = true) => {
+    const currentRequestId = ++requestIdRef.current;
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     if (showSpinner) setLoading(true);
     setError(null);
 
@@ -81,27 +95,58 @@ function DashboardContent() {
     setZenithObject(getZenithObject(lat, lng));
 
     try {
-      const [iss, sats, horizons] = await Promise.all([
-        fetchISSPosition().catch(() => null),
-        fetchSatellites().catch(() => null),
-        fetchHorizons(lat, lng).catch(() => null),
+      const [iss, sats, horizons, weather] = await Promise.all([
+        fetchISSPosition({ signal: controller.signal }).catch((err) => {
+          if (controller.signal.aborted) return null;
+          console.error(err);
+          return null;
+        }),
+        fetchSatellites({ signal: controller.signal }).catch((err) => {
+          if (controller.signal.aborted) return null;
+          console.error(err);
+          return null;
+        }),
+        fetchHorizons(lat, lng, undefined, { signal: controller.signal }).catch((err) => {
+          if (controller.signal.aborted) return null;
+          console.error(err);
+          return null;
+        }),
+        fetchObservationConditions(lat, lng, { signal: controller.signal }).catch((err) => {
+          if (controller.signal.aborted) return null;
+          console.error(err);
+          return null;
+        }),
       ]);
 
-      if (iss) setIssData(iss);
-      if (sats) setSatData(sats);
+      if (requestIdRef.current !== currentRequestId || controller.signal.aborted) {
+        return;
+      }
+
+      setIssData(iss ?? null);
+      setSatData(sats ?? null);
       if (horizons?.zenithObject) setZenithObject(horizons.zenithObject);
+      setLocalData({
+        ...mock,
+        weather: weather ?? mock.weather,
+        visiblePlanets: estimateVisiblePlanets(lat, lng),
+        twinScore: estimateTwinScore(weather ?? mock.weather),
+      });
       setCachedAt(new Date().toISOString());
-    } catch {
+    } catch (err) {
+      if (controller.signal.aborted) return;
+      console.error(err);
       setError("API unavailable");
       if (!cachedAt) setCachedAt(new Date().toISOString());
     } finally {
-      setLoading(false);
+      if (requestIdRef.current === currentRequestId) {
+        setLoading(false);
+      }
     }
   }, [lat, lng, cachedAt]);
 
   useEffect(() => {
     loadData(true);
-  }, [lat, lng]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [lat, lng, loadData]);
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -129,6 +174,7 @@ function DashboardContent() {
             onLocationSelect={(newLat, newLng) => {
               setLat(newLat);
               setLng(newLng);
+              router.push(`/dashboard?lat=${newLat}&lng=${newLng}&t=${Date.now()}`);
             }}
           />
         </div>
@@ -166,6 +212,11 @@ function DashboardContent() {
         </div>
       </div>
 
+      {loading && (
+        <div className="rounded-2xl border border-sky-500/30 bg-sky-500/10 p-4 text-slate-100 text-sm font-mono">
+          Fetching fresh telemetry for {locationName} at {lat.toFixed(4)}, {lng.toFixed(4)}…
+        </div>
+      )}
       {error && (
         <p className="font-mono text-xs text-amber-400 text-center">
           Data unavailable — showing cache from {cachedAt ? new Date(cachedAt).toLocaleTimeString() + " UTC" : "earlier session"}
@@ -173,10 +224,10 @@ function DashboardContent() {
       )}
 
       <div className="bg-yellow-100/10 border-2 border-yellow-500/50 p-6 rounded-2xl shadow-lg backdrop-blur-xl">
-        <h3 className="font-bold text-lg text-yellow-300">🎯 Zenith Object (Directly Overhead)</h3>
+        <h3 className="font-bold text-lg text-yellow-300">🎯 Projected Zenith Object</h3>
         <p className="text-4xl font-bold text-yellow-400 mt-2">{zenithObject}</p>
         <p className="text-sm text-slate-400 mt-2">
-          The celestial body at exactly 90° altitude directly above {locationName} right now
+          Predicted celestial body closest to zenith for {locationName}. Actual overhead alignment is modeled from orbital and horizon data.
         </p>
         <p className="text-xs text-gray-500 mt-2 font-mono">Last updated: {lastUpdated}</p>
       </div>

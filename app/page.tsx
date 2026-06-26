@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LocationSearch as DynamicLocationSearch } from "./components/LocationSearch";
 import { useLocationStore } from "./lib/api-client";
+import { APODDisplay } from "./components/APODDisplay";
 
 /* ------------------------------------------------------------------ */
 /*  Animated Particle Canvas                                           */
@@ -321,7 +322,7 @@ function LocationSearchWrapper() {
 
 export default function Page() {
   return (
-    <main className="relative min-h-screen overflow-x-hidden" style={{ color: "var(--foreground)" }}>
+    <main className="page-with-nav relative min-h-screen overflow-x-hidden" style={{ color: "var(--foreground)" }}>
       <ParticleBackground />
       <ShootingStars />
 
@@ -530,6 +531,32 @@ export default function Page() {
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {FEATURES.map((f, i) => <FeatureCard key={f.code} f={f} i={i} />)}
         </div>
+      </section>
+
+      {/* ── ASTRONOMY PICTURE OF THE DAY ── */}
+      <section className="relative z-10 mx-auto w-full max-w-3xl px-6 py-20 sm:px-10">
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+          className="mb-8"
+        >
+          <h2 className="text-2xl font-bold" style={{ color: "var(--foreground)" }}>
+            Featured: Astronomy Picture
+          </h2>
+          <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>
+            NASA's daily exploration of the cosmos
+          </p>
+        </motion.div>
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+        >
+          <APODDisplay />
+        </motion.div>
       </section>
 
       {/* ── CLOSING CTA ── */}

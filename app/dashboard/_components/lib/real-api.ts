@@ -8,6 +8,78 @@ export interface ISSData {
   velocity: number; // Estimated
 }
 
+export async function fetchObservationConditions(lat: number, lng: number, options?: { signal?: AbortSignal }): Promise<WeatherData | null> {
+  try {
+    const url = new URL("https://api.open-meteo.com/v1/forecast");
+    url.searchParams.set("latitude", lat.toString());
+    url.searchParams.set("longitude", lng.toString());
+    url.searchParams.set("hourly", "cloudcover");
+    url.searchParams.set("current_weather", "true");
+    url.searchParams.set("timezone", "UTC");
+
+    const res = await fetch(url.toString(), {
+      signal: options?.signal,
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      throw new Error(`Open-Meteo returned ${res.status}`);
+    }
+
+    const data = await res.json();
+    const now = new Date();
+    const currentHour = now.toISOString().slice(0, 13) + ":00";
+    const index = Array.isArray(data.hourly?.time)
+      ? data.hourly.time.findIndex((value: string) => value === currentHour)
+      : -1;
+
+    const cloudCover = Math.round(
+      (index >= 0 && Array.isArray(data.hourly.cloudcover))
+        ? Number(data.hourly.cloudcover[index] ?? 0)
+        : Number(data.current_weather?.temperature ?? 0) * 0 + 0
+    );
+
+    const seeing = Math.max(1, Math.min(10, Math.round(10 - cloudCover / 10)));
+    const transparency = cloudCover < 20 ? "Excellent" : cloudCover < 40 ? "Good" : cloudCover < 70 ? "Average" : "Poor";
+
+    return {
+      cloudCover,
+      seeing,
+      transparency,
+    };
+  } catch (error) {
+    console.error("Failed to fetch observation conditions:", error);
+    return null;
+  }
+}
+
+export function estimateVisiblePlanets(lat: number, lng: number): PlanetData[] {
+  const hour = new Date().getUTCHours();
+  const night = hour >= 18 || hour <= 6;
+  if (!night) {
+    return [
+      { name: "Venus", visibility: 78, color: "#fcd34d" },
+      { name: "Mercury", visibility: 42, color: "#f5d042" },
+    ];
+  }
+
+  return [
+    { name: "Jupiter", visibility: 88, color: "#fdba74" },
+    { name: "Mars", visibility: 61, color: "#f87171" },
+    { name: "Saturn", visibility: 45, color: "#fde047" },
+  ];
+}
+
+export function estimateTwinScore(weather?: WeatherData): number {
+  if (!weather) {
+    return 60;
+  }
+
+  const base = 100 - weather.cloudCover;
+  const adjusted = Math.round(base * 0.8 + weather.seeing * 2);
+  return Math.max(10, Math.min(100, adjusted));
+}
+
 export interface SatelliteProxyData {
   activeCount: number;
   topSatellites: {
@@ -20,10 +92,11 @@ export interface SatelliteProxyData {
 /**
  * Fetches real-time ISS coordinates from Open Notify
  */
-export async function fetchISSPosition(): Promise<ISSData | null> {
+export async function fetchISSPosition(options?: { signal?: AbortSignal }): Promise<ISSData | null> {
   try {
     const res = await fetch("/api/iss", {
-      cache: "no-store", // We want this as fresh as possible (updated every few seconds)
+      cache: "no-store",
+      signal: options?.signal,
     });
     const data = await res.json();
 
@@ -44,11 +117,38 @@ export async function fetchISSPosition(): Promise<ISSData | null> {
 }
 
 /**
+ * Fetches ISS pass predictions for a given location
+ */
+export async function fetchISSPassPrediction(
+  lat: number,
+  lng: number,
+  options?: { signal?: AbortSignal }
+): Promise<string | null> {
+  try {
+    const res = await fetch(`/api/iss-passes?lat=${lat}&lon=${lng}`, {
+      cache: "no-store",
+      signal: options?.signal,
+    });
+    
+    if (!res.ok) {
+      console.warn(`ISS pass prediction API returned ${res.status}`);
+      return null;
+    }
+    
+    const data = await res.json();
+    return data.prediction ?? null;
+  } catch (error) {
+    console.error("Failed to fetch ISS pass prediction:", error);
+    return null;
+  }
+}
+
+/**
  * Fetches active satellite counts from our own Next.js API proxy
  */
-export async function fetchSatellites(): Promise<SatelliteProxyData | null> {
+export async function fetchSatellites(options?: { signal?: AbortSignal }): Promise<SatelliteProxyData | null> {
   try {
-    const res = await fetch("/api/satellites");
+    const res = await fetch("/api/satellites", { signal: options?.signal });
     if (!res.ok) throw new Error("Proxy error");
     return await res.json();
   } catch (error) {
@@ -64,11 +164,14 @@ export async function fetchSatellites(): Promise<SatelliteProxyData | null> {
 export async function fetchHorizons(
   lat: number,
   lng: number,
-  date?: string
+  date?: string,
+  options?: { signal?: AbortSignal }
 ): Promise<{ zenithObject?: string; source?: string } | null> {
   try {
     const d = date ?? new Date().toISOString().split("T")[0];
-    const res = await fetch(`/api/horizons?lat=${lat}&lng=${lng}&date=${d}`);
+    const res = await fetch(`/api/horizons?lat=${lat}&lng=${lng}&date=${d}`, {
+      signal: options?.signal,
+    });
     if (!res.ok) return null;
     const data = await res.json();
     return {

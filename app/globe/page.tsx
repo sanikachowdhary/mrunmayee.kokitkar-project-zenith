@@ -9,6 +9,7 @@ import { PresetButton, STARGAZING_PRESETS } from "../components/PresetButton";
 import { setupConstellationOverlay, setupOrbitalTrail } from "../components/ConstellationOverlay";
 import { LocationSearch } from "../components/LocationSearch";
 import { hydrateLocationStore } from "../lib/api-client";
+import { fetchISSPassPrediction } from "../dashboard/_components/lib/real-api";
 
 interface GeographicCoordinate {
   latitude: number;
@@ -55,6 +56,8 @@ export default function GlobePage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selected, setSelected] = useState<GeographicCoordinate | null>(null);
   const [selectedSatellite, setSelectedSatellite] = useState<SatelliteData | null>(null);
+  const [realISSPrediction, setRealISSPrediction] = useState<string | null>(null);
+  const [issPredictionLoading, setIssPredictionLoading] = useState(false);
   
   // Controls state
   const [autoRotate, setAutoRotate] = useState(true);
@@ -151,13 +154,17 @@ export default function GlobePage() {
     if (lightPollutionScore >= 7) stargazingQuality = "Poor";
     else if (lightPollutionScore >= 4) stargazingQuality = "Moderate";
 
-    // ISS Visibility Prediction
-    const isWithinISSInclination = Math.abs(lat) <= 60;
-    const passMinutes = Math.abs(Math.floor(Math.sin((lat + lng + timelineOffset) * 0.5) * 45)) + 5;
-    const issVisible = isWithinISSInclination && (passMinutes < 25);
-    const issPrediction = issVisible 
-      ? `YES - Pass predicted in ~${passMinutes} minutes at ${Math.floor(Math.sin(lat) * 20) + 35}° elevation.`
-      : "NO - No optimal passes predicted in the next 90 minutes.";
+    // ISS Visibility Prediction (use real API data if available, otherwise estimate)
+    const issPredictionText = realISSPrediction ?? (
+      (() => {
+        const isWithinISSInclination = Math.abs(lat) <= 60;
+        const passMinutes = Math.abs(Math.floor(Math.sin((lat + lng + timelineOffset) * 0.5) * 45)) + 5;
+        const issVisible = isWithinISSInclination && (passMinutes < 25);
+        return issVisible 
+          ? `YES - Pass predicted in ~${passMinutes} minutes at ${Math.floor(Math.sin(lat) * 20) + 35}° elevation.`
+          : "NO - No optimal passes predicted in the next 90 minutes.";
+      })()
+    );
 
     // Satellite Density Overhead
     let satDensity: "Low" | "Medium" | "High" = "Medium";
@@ -171,11 +178,11 @@ export default function GlobePage() {
       spaceRelevance,
       stargazingQuality,
       lightPollutionScore,
-      issPrediction,
+      issPrediction: issPredictionText,
       satDensity,
       explanation
     };
-  }, [selected, timelineOffset]);
+  }, [selected, timelineOffset, realISSPrediction]);
 
   // Mission Progress Percentage
   const missionProgress = useMemo(() => {
@@ -202,6 +209,35 @@ export default function GlobePage() {
   useEffect(() => {
     hydrateLocationStore();
   }, []);
+
+  // Fetch real ISS pass prediction for selected location
+  useEffect(() => {
+    if (!selected) {
+      setRealISSPrediction(null);
+      return;
+    }
+
+    const abortCtrl = new AbortController();
+    setIssPredictionLoading(true);
+
+    fetchISSPassPrediction(selected.latitude, selected.longitude, { signal: abortCtrl.signal })
+      .then((prediction) => {
+        if (!abortCtrl.signal.aborted) {
+          setRealISSPrediction(prediction);
+          setIssPredictionLoading(false);
+        }
+      })
+      .catch((error) => {
+        if (!abortCtrl.signal.aborted) {
+          console.warn("Failed to fetch ISS pass prediction:", error);
+          setIssPredictionLoading(false);
+        }
+      });
+
+    return () => {
+      abortCtrl.abort();
+    };
+  }, [selected]);
 
   // AI Chat Assistant message response handler
   const handleSendChatMessage = (text: string) => {
@@ -675,7 +711,7 @@ export default function GlobePage() {
   }, [selected]);
 
   return (
-    <main className="relative h-[100dvh] w-full overflow-hidden bg-[#03040a] pt-20">
+    <main className="page-with-nav relative h-[100dvh] w-full overflow-hidden bg-[#03040a] pt-20">
       {/* 3D Globe Container */}
       <div ref={containerRef} className="absolute inset-0" />
 
@@ -800,14 +836,14 @@ export default function GlobePage() {
       )}
 
       {/* ── Left Side: Controls + Location ── */}
-      <div className="absolute top-24 left-6 z-20 w-72 max-h-[calc(100vh-6rem)] overflow-y-auto pointer-events-auto flex flex-col gap-4">
+      <div className="absolute top-24 left-6 z-20 w-72 max-h-[calc(100vh-6rem)] overflow-y-auto pointer-events-auto flex flex-col gap-4 hidden lg:flex">
         <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 backdrop-blur-xl">
           <LocationSearch showCurrentLocation />
         </div>
       </div>
 
       {/* ── Right Side: Space Event Stream + Simulation Timeline ── */}
-      <div className="absolute top-24 right-6 z-20 w-80 pointer-events-auto max-h-[calc(100vh-6rem)] flex flex-col gap-4">
+      <div className="absolute top-24 right-6 z-20 w-80 pointer-events-auto max-h-[calc(100vh-6rem)] flex flex-col gap-4 hidden lg:flex">
         <SpaceEventStream />
 
         <div className="flex-1 min-h-0 relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950/70 shadow-[0_8px_32px_rgba(0,0,0,0.6)] backdrop-blur-xl flex flex-col">
@@ -817,16 +853,19 @@ export default function GlobePage() {
           </div>
           <div className="p-4 flex flex-col gap-3">
             <div className="flex justify-between items-center font-mono text-[9px] text-slate-500 uppercase tracking-widest">
-              <span>Hour Offset</span>
+              <label htmlFor="timeline-scrub" className="sr-only">Simulation Hour Offset</label>
+              <span id="timeline-label">Hour Offset</span>
               <span className="text-slate-300 font-bold">{timelineOffset === 0 ? "Realtime" : `${timelineOffset > 0 ? "+" : ""}${timelineOffset} Hours`}</span>
             </div>
             <input
+              id="timeline-scrub"
               type="range"
               min="-24"
               max="24"
               step="1"
               value={timelineOffset}
               onChange={(e) => setTimelineOffset(parseInt(e.target.value))}
+              aria-labelledby="timeline-label"
               className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-500 min-h-[44px]"
             />
           </div>
@@ -997,16 +1036,13 @@ export default function GlobePage() {
       )}
 
       {/* ── Right Side Bottom: Floating Dashboard & Scrubber Controls Card ── */}
-      <div className="pointer-events-none absolute bottom-32 right-6 z-20 flex flex-col gap-4 w-[min(92vw,360px)]">
+      <div className="pointer-events-none absolute bottom-32 right-6 z-20 flex flex-col gap-4 w-[min(92vw,360px)] hidden lg:flex">
         {/* Globe HUD Controls Card */}
         <div className="pointer-events-auto">
           <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950/70 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.6)] backdrop-blur-xl">
             <div className="absolute -inset-px rounded-2xl bg-gradient-to-br from-white/5 via-transparent to-white/5 pointer-events-none" />
 
             <div className="relative flex flex-col gap-4">
-              {/* Timeline Scrubber Header - moved to right sidebar */}
-              <div className="hidden" />
-
               {/* Constellation Lines Toggle */}
               <div className="flex items-center justify-between border-t border-white/5 pt-3">
                 <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-slate-400 font-medium">
@@ -1042,7 +1078,7 @@ export default function GlobePage() {
               {/* Satellite Radar Mode Toggle */}
               <div className="flex items-center justify-between border-t border-white/5 pt-3">
                 <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-slate-400 font-medium">
-                  Satellite Radar mode
+                  Satellite Radar Mode
                 </span>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input

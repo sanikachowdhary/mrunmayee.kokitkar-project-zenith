@@ -4,7 +4,7 @@ import type { PlanetData } from "../lib/api-mock";
 export function VisiblePlanetsCard({ data, loading, lastUpdated }: { data?: PlanetData[]; loading: boolean; lastUpdated?: string }) {
   return (
     <TelemetryCard 
-      title="Visible Planets" 
+      title="Estimated Visible Planets" 
       loading={loading} 
       delay={0.1}
       lastUpdated={lastUpdated}

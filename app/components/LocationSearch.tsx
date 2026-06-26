@@ -33,13 +33,17 @@ export function LocationSearch({
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    function handlePointerOutside(event: PointerEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("pointerdown", handlePointerOutside);
+    document.addEventListener("touchstart", handlePointerOutside);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerOutside);
+      document.removeEventListener("touchstart", handlePointerOutside);
+    };
   }, []);
 
   useEffect(() => {
@@ -152,6 +156,7 @@ export function LocationSearch({
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -5 }}
+            onPointerDown={(event) => event.stopPropagation()}
             className="absolute z-50 mt-2 w-full rounded-lg border border-white/10 bg-slate-900/95 shadow-xl backdrop-blur-xl max-h-60 overflow-y-auto"
           >
             {results.map((r, i) => (

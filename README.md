@@ -26,11 +26,14 @@ Astronomers, educators, and space enthusiasts need a unified platform to answer 
 |------|---------|-------------|
 | 🌍 | **3D Globe** | CesiumJS-powered Earth with terrain, ISS orbit, satellite radar, and stargazing presets |
 | 🛸 | **ISS Tracking** | Live position from OpenNotify API, refreshed every 30 seconds |
+| 📡 | **ISS Pass Predictor** | Real-time pass predictions showing optimal viewing windows for your location |
 | ⏳ | **Sky Time Machine** | Scrub ±100 years with bidirectional date/slider sync and Live/Historical/Future modes |
 | 🔭 | **Cosmic Twin Engine** | Proprietary observation suitability score aggregating sky conditions per coordinate |
 | 📍 | **Coordinate Challenge Mode** | Enter any lat/lng and load dashboard telemetry instantly |
 | 🌌 | **Constellation Overlays** | Toggleable cyan constellation lines (Ursa Major, Orion, Cassiopeia) on the 3D globe |
 | 📊 | **Dashboard** | Real-time telemetry panels with live UTC timestamps and shareable sky links |
+| 🪐 | **APOD Display** | NASA's Astronomy Picture of the Day featured on homepage |
+| 🌤️ | **Weather Integration** | Real-time cloud cover, atmospheric seeing, and transparency from Open-Meteo API |
 
 ---
 
@@ -92,6 +95,39 @@ Astronomers, educators, and space enthusiasts need a unified platform to answer 
 | **Fallback** | Google Geocoding API if `GOOGLE_GEOCODING_API_KEY` is set |
 | **Cache** | 1 hour |
 
+### 5. Open-Meteo Weather API
+
+| Field | Value |
+|-------|-------|
+| **Endpoint** | `https://api.open-meteo.com/v1/forecast` |
+| **Purpose** | Real-time atmospheric conditions (cloud cover, seeing) for observation quality |
+| **Parameters** | `latitude`, `longitude`, `hourly=cloudcover`, `current_weather=true` |
+| **Proxy Function** | `fetchObservationConditions(lat, lng)` in `app/dashboard/_components/lib/real-api.ts` |
+| **Cache** | No cache (live conditions) |
+| **Features** | Cloud cover percentage, seeing index, atmospheric transparency |
+
+### 6. NASA APOD API
+
+| Field | Value |
+|-------|-------|
+| **Endpoint** | `https://api.nasa.gov/planetary/apod` |
+| **Purpose** | NASA's daily Astronomy Picture of the Day with explanation |
+| **Parameters** | `api_key={NASA_API_KEY}` |
+| **Proxy Route** | `GET /api/apod` |
+| **Cache** | 24 hours |
+| **Environment** | `NASA_API_KEY` (optional; uses DEMO_KEY if not set) |
+
+### 7. ISS Pass Prediction
+
+| Field | Value |
+|-------|-------|
+| **Endpoint** | `https://api.open-notify.org/iss-pass.json` |
+| **Purpose** | Calculates when ISS will be visible from a specific location |
+| **Parameters** | `lat={latitude}`, `lon={longitude}` |
+| **Proxy Route** | `GET /api/iss-passes?lat={lat}&lon={lon}` |
+| **Cache** | No cache (predictions change by minute) |
+| **Response** | Human-readable pass prediction (time, duration, elevation) |
+
 ---
 
 ## Installation & Setup
@@ -148,16 +184,18 @@ npm start
 ```
 mrunmayee.kokitkar-project-zenith/
 ├── app/
-│   ├── page.tsx                    # Homepage — hero, features, location search
+│   ├── page.tsx                    # Homepage — hero, features, APOD display, location search
 │   ├── layout.tsx                  # Root layout + NavBar
 │   ├── globals.css                 # Cosmic theme, glass panels, scrubber styles
 │   ├── components/
 │   │   ├── NavBar.tsx              # Fixed navigation (desktop + mobile hamburger)
-│   │   ├── LocationSearch.tsx      # Geocoding input with dropdown
+│   │   ├── LocationSearch.tsx      # Geocoding input with dropdown (improved scroll handling)
 │   │   ├── SpaceEventStream.tsx    # Live ISS event feed (real API data)
 │   │   ├── TimelineControls.tsx    # Sky Time Machine date/slider sync
 │   │   ├── PresetButton.tsx        # Stargazing location presets
-│   │   └── ConstellationOverlay.tsx # Constellation lines + ISS orbit trail
+│   │   ├── ConstellationOverlay.tsx # Constellation lines + ISS orbit trail
+│   │   ├── APODDisplay.tsx         # NASA Astronomy Picture of the Day card
+│   │   └── NavBar.tsx              # Fixed navigation
 │   ├── lib/
 │   │   ├── api-client.ts           # Shared location store (Zustand-compatible)
 │   │   └── useLiveTimestamp.ts     # Live UTC clock hook (5s refresh)
@@ -165,7 +203,9 @@ mrunmayee.kokitkar-project-zenith/
 │   │   ├── geocode/route.ts        # Nominatim + Google geocoding proxy
 │   │   ├── horizons/route.ts       # NASA Horizons ephemeris proxy
 │   │   ├── iss/route.ts            # OpenNotify ISS position proxy
-│   │   └── satellites/route.ts     # CelesTrak active satellites proxy
+│   │   ├── iss-passes/route.ts     # OpenNotify ISS pass predictor proxy
+│   │   ├── satellites/route.ts     # CelesTrak active satellites proxy
+│   │   └── apod/route.ts           # NASA APOD proxy
 │   ├── globe/
 │   │   ├── page.tsx                # 3D Cesium globe (Observatory Mode)
 │   │   └── _components/
@@ -178,7 +218,9 @@ mrunmayee.kokitkar-project-zenith/
 │       └── _components/
 │           ├── DashboardLayout.tsx # Telemetry grid + share links
 │           ├── TelemetryCard.tsx   # Reusable panel with timestamps
-│           └── cards/              # CosmicTwin, ISS, Planets, Satellites, Weather
+│           ├── cards/              # CosmicTwin, ISS, Planets, Satellites, Weather
+│           └── lib/
+│               └── real-api.ts     # Real API integration (ISS, satellites, APOD, weather)
 ├── public/
 │   └── cesium/                     # CesiumJS runtime assets (auto-copied)
 ├── package.json
@@ -192,7 +234,9 @@ mrunmayee.kokitkar-project-zenith/
 
 ### Homepage (`/`)
 
-The landing page introduces Project Zenith with an animated particle background, shooting stars, and a location search bar. Searching for a city (e.g., "Pune", "London") or raw coordinates (e.g., `28.6139,77.2090`) geocodes via the server-side Nominatim proxy and navigates to the Dashboard with the resolved coordinates. Tagline: *Open science · Real-time telemetry · Any coordinate on Earth*.
+The landing page introduces Project Zenith with an animated particle background, shooting stars, and a location search bar. Searching for a city (e.g., "Pune", "London") or raw coordinates (e.g., `28.6139,77.2090`) geocodes via the server-side Nominatim proxy and navigates to the Dashboard with the resolved coordinates.
+
+**New:** Featured APOD (Astronomy Picture of the Day) card displays NASA's daily cosmic image with description, date, photographer credit, and links to view full resolution.
 
 ### Globe Page (`/globe`)
 
@@ -211,24 +255,28 @@ The 3D Earth observatory powered by CesiumJS:
 Travel through time to reconstruct any night sky:
 
 - **Temporal scrubber** — ±100 years with year tick shortcuts
-- **Bidirectional sync** — Moving slider updates date field; changing date updates slider
+- **Temporal Offset** — Bidirectional sync between slider and date field
 - **Mode labels** — Live Mode (±1 hour), Historical Mode (past), Future Mode (future)
 - **Now button** — One-click reset to current UTC date/time
 - **Canvas starfield** — Real-looking stars with magnitude-based sizing, horizon line, compass directions
 - **Sky telemetry** — Sun altitude/azimuth, sidereal time, moon phase, visible planets
+- **Atmospheric conditions** — Real-time cloud cover and transparency from Open-Meteo API
 
 ### Dashboard (`/dashboard`)
 
-The Data Intelligence Layer loads immediately with cached telemetry (never empty shells):
+The Data Intelligence Layer loads immediately with real-time telemetry:
 
-- **Cosmic Twin Score** — 0–100 observation suitability metric
-- **Observation Conditions** — Cloud cover, atmospheric seeing, transparency
+- **Cosmic Twin Score** — 0–100 observation suitability metric aggregating sky conditions
+- **Observation Conditions** — Real-time cloud cover, atmospheric seeing, transparency from Open-Meteo API
 - **Visible Planets** — Jupiter, Venus, Mars, Saturn with visibility percentages
 - **ISS Telemetry** — Live lat/lng, altitude (~408 km), velocity (~27,600 km/h)
+- **ISS Pass Prediction** — Next optimal viewing window with pass duration and elevation
 - **Active Satellites** — Count from CelesTrak with notable elements list
+- **Weather Integration** — Cloud cover %, seeing index, atmospheric transparency
 - **Zenith Object** — Highlighted panel showing the celestial body directly overhead
 - **Copy Sky Link** — Shareable URL: `/dashboard?lat=28.6139&lng=77.2090&t=2026-06-26T21:38:00Z`
 - **Coordinate Challenge** — Link to `/dashboard/challenge` for manual coordinate entry
+- **Real UTC Timestamps** — Live countdown timers and epoch displays
 
 ---
 

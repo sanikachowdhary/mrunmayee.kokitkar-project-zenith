@@ -3,9 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
+import { useLocationStore } from "../../lib/api-client";
 
 export default function ChallengePage() {
   const router = useRouter();
+  const setLocation = useLocationStore((s) => s.setLocation);
   const [coords, setCoords] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -31,7 +33,8 @@ export default function ChallengePage() {
       return;
     }
 
-    router.push(`/dashboard?lat=${lat}&lng=${lng}`);
+    setLocation(lat, lng, `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+    router.push(`/dashboard?lat=${lat}&lng=${lng}&t=${Date.now()}`);
   };
 
   const examples = [

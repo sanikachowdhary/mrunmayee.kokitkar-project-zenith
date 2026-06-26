@@ -4,7 +4,7 @@ import type { WeatherData } from "../lib/api-mock";
 export function ObservationConditions({ data, loading, lastUpdated }: { data?: WeatherData; loading: boolean; lastUpdated?: string }) {
   return (
     <TelemetryCard 
-      title="Observation Conditions" 
+      title="Estimated Observation Conditions" 
       loading={loading} 
       delay={0.4}
       lastUpdated={lastUpdated}

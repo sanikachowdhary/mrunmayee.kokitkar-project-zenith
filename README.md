@@ -372,27 +372,6 @@ npm start
 **Sanika Chowdhary** — UI/UX Design, Dashboard Architecture, Documentation
 
 ---
-
-## Application Screenshots
-
-Here are visual mockups of the Project Zenith interfaces across different screens:
-
-### 1. Landing & Welcome Portal
-![Homepage View](public/screenshots/homepage_view.jpg)
-*The home page featuring dynamic orbital telemetry and search capability.*
-
-### 2. Telemetry Intelligence Dashboard
-![Dashboard View](public/screenshots/dashboard_view.jpg)
-*Real-time data panels displaying ISS location, meteorological seeing, and visible planets.*
-
-### 3. 3D Earth Orbit Observatory
-![Globe View](public/screenshots/globe_view.jpg)
-*Interactive 3D Earth displaying ISS path, orbital tracks, and preset views.*
-
-### 4. Sky Time Machine
-![Sky View](public/screenshots/sky_view.jpg)
-*Historical and future sky reconstruction viewport displaying seasonal constellations.*
-
 ---
 
 *Eyes up. Always.*

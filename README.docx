@@ -1,0 +1,544 @@
+
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+  <meta charset="utf-8">
+  <title>Project Zenith Documentation</title>
+  <!--[if gte mso 9]>
+  <xml>
+    <w:WordDocument>
+      <w:View>Print</w:View>
+      <w:Zoom>100</w:Zoom>
+    </w:WordDocument>
+  </xml>
+  <![endif]-->
+  <style>
+    body {
+      font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+      color: #334155;
+      line-height: 1.5;
+      margin: 40px;
+    }
+    h1 {
+      font-family: 'Calibri Light', sans-serif;
+      font-size: 24pt;
+      color: #1e3a8a;
+      border-bottom: 2px solid #3b82f6;
+      padding-bottom: 8px;
+      margin-top: 30px;
+    }
+    h2 {
+      font-family: 'Calibri Light', sans-serif;
+      font-size: 16pt;
+      color: #1e40af;
+      margin-top: 24px;
+      border-bottom: 1px solid #cbd5e1;
+      padding-bottom: 4px;
+    }
+    h3 {
+      font-size: 12.5pt;
+      color: #0f766e;
+      margin-top: 18px;
+    }
+    p, li {
+      font-size: 11pt;
+      margin-bottom: 8px;
+    }
+    pre {
+      font-family: Consolas, monospace;
+      font-size: 9pt;
+    }
+  </style>
+</head>
+<body>
+  <h1>Project Zenith: The Celestial Eye</h1><p></p><strong>A real-time celestial tracking platform that visualizes astronomical data above any geographic coordinate on Earth.</strong><p></p><table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse; width:100%; font-family:sans-serif; margin:16px 0; border:1px solid #cbd5e1;">
+  <tr>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;"></th>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;"></th>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Team</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Mrunmayee Kokitkar, Sanika Chowdhary</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Competition</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">AstralWeb Innovate — Round 2</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Live Demo</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><a href="https://mrunmayee-kokitkar-project-zenith.vercel.app" style="color:#0284c7; text-decoration:underline;">mrunmayee-kokitkar-project-zenith.vercel.app</a></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Repository</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><a href="https://github.com/sanikachowdhary/mrunmayee.kokitkar-project-zenith" style="color:#0284c7; text-decoration:underline;">github.com/sanikachowdhary/mrunmayee.kokitkar-project-zenith</a></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Build Date</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">26 Jun 2026</td>
+  </tr>
+</table><p></p>
+---<p></p><h2>Problem Statement</h2><p></p>Astronomers, educators, and space enthusiasts need a unified platform to answer a deceptively simple question: <strong>what is happening in the sky directly above any point on Earth, right now?</strong> Existing tools are fragmented — one app for ISS tracking, another for planet visibility, another for light pollution maps. None combine real-time orbital telemetry, historical sky reconstruction, and location-aware cosmic intelligence in a single, shareable interface.<p></p><strong>Project Zenith</strong> solves this by fusing live satellite APIs, NASA ephemeris data, and interactive 3D visualization into one platform. Enter any city name or raw coordinates, and instantly see ISS position, visible planets, observation conditions, constellation overlays, and a Cosmic Twin Score for that exact location.<p></p>---<p></p><h2>Features</h2><p></p><table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse; width:100%; font-family:sans-serif; margin:16px 0; border:1px solid #cbd5e1;">
+  <tr>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;">Icon</th>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;">Feature</th>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;">Description</th>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">🌍</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>3D Globe</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">CesiumJS-powered Earth with terrain, ISS orbit, satellite radar, and stargazing presets</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">🛸</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>ISS Tracking</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Live position from OpenNotify API, refreshed every 30 seconds</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">📡</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>ISS Pass Predictor</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Real-time pass predictions showing optimal viewing windows for your location</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">⏳</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Sky Time Machine</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Scrub ±100 years with bidirectional date/slider sync and Live/Historical/Future modes</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">🔭</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Cosmic Twin Engine</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Proprietary observation suitability score aggregating sky conditions per coordinate</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">📍</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Coordinate Challenge Mode</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Enter any lat/lng and load dashboard telemetry instantly</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">🌌</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Constellation Overlays</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Toggleable cyan constellation lines (Ursa Major, Orion, Cassiopeia) on the 3D globe</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">📊</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Dashboard</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Real-time telemetry panels with live UTC timestamps and shareable sky links</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">🪐</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>APOD Display</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">NASA's Astronomy Picture of the Day featured on homepage</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">🌤️</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Weather Integration</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Real-time cloud cover, atmospheric seeing, and transparency from Open-Meteo API</td>
+  </tr>
+</table><p></p>
+---<p></p><h2>Tech Stack</h2><p></p><table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse; width:100%; font-family:sans-serif; margin:16px 0; border:1px solid #cbd5e1;">
+  <tr>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;">Layer</th>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;">Technology</th>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Framework</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Next.js 16</strong> (App Router)</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Language</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>TypeScript</strong></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Styling</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>TailwindCSS 4</strong></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">3D Engine</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>CesiumJS 1.142</strong> (CDN + local assets)</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Maps / Geocoding</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>OpenStreetMap Nominatim</strong> via server-side proxy</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">State Management</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Zustand-compatible location store</strong> (<code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">app/lib/api-client.ts</code>)</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Animation</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Framer Motion</strong></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Deployment</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Vercel</strong></td>
+  </tr>
+</table><p></p>
+---<p></p><h2>External APIs</h2><p></p><h3>1. NASA Horizons API</h3><p></p><table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse; width:100%; font-family:sans-serif; margin:16px 0; border:1px solid #cbd5e1;">
+  <tr>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;">Field</th>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;">Value</th>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Endpoint</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">https://ssd.jpl.nasa.gov/api/horizons.api</code></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Purpose</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Planetary ephemeris and observer-target geometry for any lat/lng/date</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Parameters</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">format=json</code>, <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">COMMAND</code>, <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">EPHEM_TYPE=OBSERVER</code>, <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">SITE_COORD</code>, <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">START_TIME</code>, <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">STOP_TIME</code>, <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">STEP_SIZE</code></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Proxy Route</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">GET /api/horizons?lat={lat}&lng={lng}&date={YYYY-MM-DD}</code></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Cache</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">1 hour</td>
+  </tr>
+</table><p></p>
+<h3>2. CelesTrak API</h3><p></p><table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse; width:100%; font-family:sans-serif; margin:16px 0; border:1px solid #cbd5e1;">
+  <tr>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;">Field</th>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;">Value</th>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Endpoint</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=json</code></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Purpose</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Active satellite catalog for orbital density and tracking</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Parameters</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">GROUP=active</code>, <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">FORMAT=json</code></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Proxy Route</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">GET /api/satellites</code></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Cache</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">10 minutes</td>
+  </tr>
+</table><p></p>
+<h3>3. OpenNotify API</h3><p></p><table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse; width:100%; font-family:sans-serif; margin:16px 0; border:1px solid #cbd5e1;">
+  <tr>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;">Field</th>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;">Value</th>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Endpoint</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">http://api.open-notify.org/iss-now.json</code></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Purpose</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Real-time International Space Station latitude/longitude</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Parameters</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">None (returns <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">iss_position.latitude</code>, <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">iss_position.longitude</code>, <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">timestamp</code>)</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Proxy Route</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">GET /api/iss</code></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Cache</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">No cache (live polling every 5–30 seconds)</td>
+  </tr>
+</table><p></p>
+<h3>4. OpenStreetMap Nominatim</h3><p></p><table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse; width:100%; font-family:sans-serif; margin:16px 0; border:1px solid #cbd5e1;">
+  <tr>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;">Field</th>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;">Value</th>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Endpoint</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">https://nominatim.openstreetmap.org/search</code></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Purpose</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Free geocoding — convert city names to coordinates</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Parameters</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">q={query}</code>, <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">format=json</code>, <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">limit=1</code></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Proxy Route</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">GET /api/geocode?q={query}</code></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Fallback</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Google Geocoding API if <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">GOOGLE_GEOCODING_API_KEY</code> is set</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Cache</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">1 hour</td>
+  </tr>
+</table><p></p>
+<h3>5. Open-Meteo Weather API</h3><p></p><table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse; width:100%; font-family:sans-serif; margin:16px 0; border:1px solid #cbd5e1;">
+  <tr>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;">Field</th>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;">Value</th>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Endpoint</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">https://api.open-meteo.com/v1/forecast</code></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Purpose</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Real-time atmospheric conditions (cloud cover, seeing) for observation quality</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Parameters</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">latitude</code>, <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">longitude</code>, <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">hourly=cloudcover</code>, <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">current_weather=true</code></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Proxy Function</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">fetchObservationConditions(lat, lng)</code> in <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">app/dashboard/_components/lib/real-api.ts</code></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Cache</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">No cache (live conditions)</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Features</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Cloud cover percentage, seeing index, atmospheric transparency</td>
+  </tr>
+</table><p></p>
+<h3>6. NASA APOD API</h3><p></p><table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse; width:100%; font-family:sans-serif; margin:16px 0; border:1px solid #cbd5e1;">
+  <tr>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;">Field</th>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;">Value</th>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Endpoint</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">https://api.nasa.gov/planetary/apod</code></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Purpose</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">NASA's daily Astronomy Picture of the Day with explanation</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Parameters</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">api_key={NASA_API_KEY}</code></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Proxy Route</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">GET /api/apod</code></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Cache</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">24 hours</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Environment</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">NASA_API_KEY</code> (optional; uses DEMO_KEY if not set)</td>
+  </tr>
+</table><p></p>
+<h3>7. ISS Pass Prediction</h3><p></p><table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse; width:100%; font-family:sans-serif; margin:16px 0; border:1px solid #cbd5e1;">
+  <tr>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;">Field</th>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;">Value</th>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Endpoint</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">https://api.open-notify.org/iss-pass.json</code></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Purpose</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Calculates when ISS will be visible from a specific location</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Parameters</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">lat={latitude}</code>, <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">lon={longitude}</code></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Proxy Route</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">GET /api/iss-passes?lat={lat}&lon={lon}</code></td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Cache</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">No cache (predictions change by minute)</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;"><strong>Response</strong></td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Human-readable pass prediction (time, duration, elevation)</td>
+  </tr>
+</table><p></p>
+---<p></p><h2>Installation & Setup</h2><p></p><h3>Prerequisites</h3><p></p>- <strong>Node.js</strong> 18+ (recommended: 20 LTS)
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>npm</strong> 9+</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">A <strong>Cesium Ion</strong> access token (optional, enables World Terrain)<p></p><h3>Environment Variables</h3><p></p>Create <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">.env.local</code> in the project root:<p></p><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;"></code>`env</li></ul>
+<h1>Required for 3D terrain (optional but recommended)</h1>
+NEXT_PUBLIC_CESIUM_ION_TOKEN=your_cesium_ion_token_here<p></p><h1>Optional: Google Geocoding fallback</h1>
+GOOGLE_GEOCODING_API_KEY=your_google_api_key_here
+<code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;"></code>`<p></p><h3>Step-by-Step Installation</h3><p></p><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;"></code>`bash
+<h1>1. Clone the repository</h1>
+git clone https://github.com/sanikachowdhary/mrunmayee.kokitkar-project-zenith.git
+cd mrunmayee.kokitkar-project-zenith<p></p><h1>2. Install dependencies</h1>
+npm install<p></p><h1>3. Copy Cesium assets (runs automatically via predev/prebuild)</h1>
+npm run predev<p></p><h1>4. Start development server</h1>
+npm run dev<p></p><h1>5. Open in browser</h1>
+<h1>http://localhost:3000</h1>
+<code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;"></code>`<p></p><h3>Build for Production</h3><p></p><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;"></code>`bash
+npm run build
+npm start
+<code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;"></code>`<p></p>---<p></p><h2>Project Structure</h2><p></p><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;"></code>`
+mrunmayee.kokitkar-project-zenith/
+├── app/
+│   ├── page.tsx                    # Homepage — hero, features, APOD display, location search
+│   ├── layout.tsx                  # Root layout + NavBar
+│   ├── globals.css                 # Cosmic theme, glass panels, scrubber styles
+│   ├── components/
+│   │   ├── NavBar.tsx              # Fixed navigation (desktop + mobile hamburger)
+│   │   ├── LocationSearch.tsx      # Geocoding input with dropdown (improved scroll handling)
+│   │   ├── SpaceEventStream.tsx    # Live ISS event feed (real API data)
+│   │   ├── TimelineControls.tsx    # Sky Time Machine date/slider sync
+│   │   ├── PresetButton.tsx        # Stargazing location presets
+│   │   ├── ConstellationOverlay.tsx # Constellation lines + ISS orbit trail
+│   │   └── APODDisplay.tsx         # NASA Astronomy Picture of the Day card
+│   ├── lib/
+│   │   ├── api-client.ts           # Shared location store (Zustand-compatible)
+│   │   └── useLiveTimestamp.ts     # Live UTC clock hook (5s refresh)
+│   ├── api/
+│   │   ├── geocode/route.ts        # Nominatim + Google geocoding proxy
+│   │   ├── horizons/route.ts       # NASA Horizons ephemeris proxy
+│   │   ├── iss/route.ts            # OpenNotify ISS position proxy
+│   │   ├── iss-passes/route.ts     # OpenNotify ISS pass predictor proxy
+│   │   ├── satellites/route.ts     # CelesTrak active satellites proxy
+│   │   └── apod/route.ts           # NASA APOD proxy
+│   ├── globe/
+│   │   ├── page.tsx                # 3D Cesium globe (Observatory Mode)
+│   │   └── _components/
+│   │       └── SpaceVisualizer.ts  # ISS orbit, radar satellites, constellations
+│   ├── sky/
+│   │   └── page.tsx                # Sky Time Machine (-100 to +100 years)
+│   └── dashboard/
+│       ├── page.tsx                # Data Intelligence Layer
+│       ├── challenge/page.tsx      # Coordinate Challenge Mode
+│       └── _components/
+│           ├── DashboardLayout.tsx # Telemetry grid + share links
+│           ├── TelemetryCard.tsx   # Reusable panel with timestamps
+│           ├── cards/              # CosmicTwin, ISS, Planets, Satellites, Weather
+│           └── lib/
+│               └── real-api.ts     # Real API integration (ISS, satellites, APOD, weather)
+├── public/
+│   └── cesium/                     # CesiumJS runtime assets (auto-copied)
+├── package.json
+├── next.config.ts
+└── README.md
+<code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;"></code>`<p></p>---<p></p><h2>Features In Detail</h2><p></p><h3>Homepage (<code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">/</code>)</h3><p></p>The landing page introduces Project Zenith with an animated particle background, shooting stars, and a location search bar. Searching for a city (e.g., "Pune", "London") or raw coordinates (e.g., <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">28.6139,77.2090</code>) geocodes via the server-side Nominatim proxy and navigates to the Dashboard with the resolved coordinates.<p></p><strong>New:</strong> Featured APOD (Astronomy Picture of the Day) card displays NASA's daily cosmic image with description, date, photographer credit, and links to view full resolution.<p></p><h3>Globe Page (<code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">/globe</code>)</h3><p></p>The 3D Earth observatory powered by CesiumJS:<p></p>- <strong>Night/Day Mode</strong> — Toggle globe lighting for stargazing simulation
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>Mission Mode</strong> — Gamified checklist (find ISS region, enable radar, fly to Everest)</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>Observatory Mode</strong> — Live Space Event Stream + Simulation Timeline (hour offset ±24h)</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>Constellation Lines</strong> — Toggle cyan overlays for Ursa Major, Orion, Cassiopeia</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>Orbit Trail</strong> — Red polyline showing ~92-minute ISS orbital path</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>Stargazing Presets</strong> — Mount Everest, Svalbard, Atacama, Pacific Ocean, Sahara Desert (camera looks UP at sky, not down at terrain)</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>Location Search</strong> — Shared Zustand store updates all pages<p></p><h3>Sky Time Machine (<code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">/sky</code>)</h3><p></p>Travel through time to reconstruct any night sky:<p></p>- <strong>Temporal scrubber</strong> — ±100 years with year tick shortcuts</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>Temporal Offset</strong> — Bidirectional sync between slider and date field</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>Mode labels</strong> — Live Mode (±1 hour), Historical Mode (past), Future Mode (future)</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>Now button</strong> — One-click reset to current UTC date/time</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>Canvas starfield</strong> — Real-looking stars with magnitude-based sizing, horizon line, compass directions</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>Sky telemetry</strong> — Sun altitude/azimuth, sidereal time, moon phase, visible planets</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>Atmospheric conditions</strong> — Real-time cloud cover and transparency from Open-Meteo API<p></p><h3>Dashboard (<code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">/dashboard</code>)</h3><p></p>The Data Intelligence Layer loads immediately with real-time telemetry:<p></p>- <strong>Cosmic Twin Score</strong> — 0–100 observation suitability metric aggregating sky conditions</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>Observation Conditions</strong> — Real-time cloud cover, atmospheric seeing, transparency from Open-Meteo API</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>Visible Planets</strong> — Jupiter, Venus, Mars, Saturn with visibility percentages</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>ISS Telemetry</strong> — Live lat/lng, altitude (~408 km), velocity (~27,600 km/h)</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>ISS Pass Prediction</strong> — Next optimal viewing window with pass duration and elevation</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>Active Satellites</strong> — Count from CelesTrak with notable elements list</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>Weather Integration</strong> — Cloud cover %, seeing index, atmospheric transparency</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>Zenith Object</strong> — Highlighted panel showing the celestial body directly overhead</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>Copy Sky Link</strong> — Shareable URL: <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">/dashboard?lat=28.6139&lng=77.2090&t=2026-06-26T21:38:00Z</code></li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>Coordinate Challenge</strong> — Link to <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">/dashboard/challenge</code> for manual coordinate entry</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;"><strong>Real UTC Timestamps</strong> — Live countdown timers and epoch displays<p></p>---<p></p><h2>API Integration Details</h2><p></p>All external API calls are proxied through Next.js Route Handlers to avoid CORS issues, enable caching, and protect API keys. Client components call internal routes (<code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">/api/iss</code>, <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">/api/geocode</code>, etc.) which forward to external services.<p></p><strong>Geocoding flow:</strong></li></ul>
+1. User types "Pune" in LocationSearch
+2. Client calls <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">GET /api/geocode?q=Pune</code>
+3. Server tries Nominatim → returns <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">{ lat: 18.5204, lng: 73.8567, displayName: "Pune, ..." }</code>
+4. Zustand store updates → all pages reflect new location<p></p><strong>ISS telemetry flow:</strong>
+1. SpaceEventStream polls <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">GET /api/iss</code> every 30 seconds
+2. Server fetches <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">api.open-notify.org/iss-now.json</code>
+3. Real timestamp + coordinates displayed in event feed
+4. Dashboard ISS card polls every 5 seconds<p></p><strong>Horizons ephemeris flow:</strong>
+1. Dashboard calls <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">GET /api/horizons?lat=19.076&lng=72.8777&date=2026-06-26</code>
+2. Server constructs Horizons observer query with site coordinates
+3. Response cached for 1 hour
+4. Zenith object computed from ephemeris + local geometry<p></p>---<p></p><h2>Testing Checklist</h2><p></p>- [ ] Location search: "Pune" → ~18.5204, 73.8567 (not Mumbai)
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] Location search: "London" → correct UK coordinates</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] Location search: raw coords "28.6139,77.2090" → accepted</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] All pages update when location changes via shared store</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] Sky Time Machine: slider and date fields sync bidirectionally</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] Sky Time Machine: mode label changes (Live / Historical / Future)</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] Sky Time Machine: "Now" button resets to current UTC</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] Dashboard: loads with visible data immediately (not empty)</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] Dashboard: live timestamps update every 5 seconds</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] Globe: Night Mode and Mission Mode toggles work</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] Globe: Constellation lines visible (toggle on/off)</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] Globe: ISS orbit trail visible (toggle on/off)</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] Globe: Space Event Stream shows real ISS timestamps</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] Globe: Navbar does not overlap controls</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] Globe: Event Stream does not overlap Timeline</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] Presets: Mount Everest → camera looks at sky above mountain</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] Coordinate Challenge: enter coords → dashboard loads</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] DevTools Network: calls to horizons, celestrak, open-notify</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] Homepage: tagline "Open science..."</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] Globe: "Observatory Mode" (not Bloomberg)</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] Mobile 375px / 768px / 1024px responsive</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] Copy Sky Link works and shared link loads correct state</li></ul>
+<ul style="margin:10px 0;"><li style="margin-left:20px; font-family:sans-serif; color:#334155;">[ ] No console errors in DevTools<p></p>---<p></p><h2>Deployment</h2><p></p><h3>Vercel (Recommended)</h3><p></p>1. Push to GitHub</li></ul>
+2. Import project in <a href="https://vercel.com" style="color:#0284c7; text-decoration:underline;">vercel.com</a>
+3. Add environment variables in Project Settings → Environment Variables
+4. Deploy — Vercel auto-builds on every push to <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">main</code><p></p><h3>Manual Deployment</h3><p></p><code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;"></code>`bash
+npm run build
+npm start
+<h1>Or deploy .next output to any Node.js host</h1>
+<code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;"></code>`<p></p><strong>Production URL:</strong> https://mrunmayee-kokitkar-project-zenith.vercel.app<p></p>---<p></p><h2>Troubleshooting</h2><p></p><table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse; width:100%; font-family:sans-serif; margin:16px 0; border:1px solid #cbd5e1;">
+  <tr>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;">Issue</th>
+    <th style="background-color:#f8fafc; font-weight:bold; text-align:left; border:1px solid #cbd5e1; font-size:10pt; color:#1e293b;">Solution</th>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Globe shows blank / loading forever</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Check <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">NEXT_PUBLIC_CESIUM_ION_TOKEN</code> in <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">.env.local</code>; verify network access to cdn.jsdelivr.net</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Location search returns wrong city</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Ensure <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">/api/geocode</code> route is deployed; Nominatim requires User-Agent header (included in proxy)</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">ISS data shows "Reconnecting"</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">OpenNotify may be temporarily down; fallback message displays automatically</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Dashboard panels empty on first load</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Hard refresh; cached telemetry should appear within 1 second</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">CelesTrak / Horizons fetch fails at build</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">SSL certificate issues in CI — routes are dynamic (<code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">ƒ</code>) and fetch at runtime</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Mobile layout overlaps</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Clear cache; NavBar collapses to hamburger below 768px</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Cesium assets missing</td>
+    <td style="border:1px solid #cbd5e1; font-size:10pt; color:#334155;">Run <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">npm run predev</code> to copy Workers/Assets to <code style="background-color:#f1f5f9; color:#0f172a; padding:2px 4px; border-radius:4px; font-family:monospace; font-size:10pt;">public/cesium/</code></td>
+  </tr>
+</table><p></p>
+---<p></p><h2>Team</h2><p></p><strong>Mrunmayee Kokitkar</strong> — Lead Developer, 3D Visualization, API Integration  
+<strong>Sanika Chowdhary</strong> — UI/UX Design, Dashboard Architecture, Documentation<p></p>---<p></p><h2>Application Screenshots</h2><p></p>Here are visual mockups of the Project Zenith interfaces across different screens:<p></p><h3>1. Landing & Welcome Portal</h3>
+<p style="text-align:center; margin:20px 0;"><img src="public/screenshots/homepage_view.jpg" alt="Homepage View" style="max-width:100%; height:auto;" /><br/><em style="font-size:9.5pt; color:#666;">Homepage View</em></p>
+<em>The home page featuring dynamic orbital telemetry and search capability.</em><p></p><h3>2. Telemetry Intelligence Dashboard</h3>
+<p style="text-align:center; margin:20px 0;"><img src="public/screenshots/dashboard_view.jpg" alt="Dashboard View" style="max-width:100%; height:auto;" /><br/><em style="font-size:9.5pt; color:#666;">Dashboard View</em></p>
+<em>Real-time data panels displaying ISS location, meteorological seeing, and visible planets.</em><p></p><h3>3. 3D Earth Orbit Observatory</h3>
+<p style="text-align:center; margin:20px 0;"><img src="public/screenshots/globe_view.jpg" alt="Globe View" style="max-width:100%; height:auto;" /><br/><em style="font-size:9.5pt; color:#666;">Globe View</em></p>
+<em>Interactive 3D Earth displaying ISS path, orbital tracks, and preset views.</em><p></p><h3>4. Sky Time Machine</h3>
+<p style="text-align:center; margin:20px 0;"><img src="public/screenshots/sky_view.jpg" alt="Sky View" style="max-width:100%; height:auto;" /><br/><em style="font-size:9.5pt; color:#666;">Sky View</em></p>
+<em>Historical and future sky reconstruction viewport displaying seasonal constellations.</em><p></p>---<p></p><em>Eyes up. Always.</em><p></p><em>Built for AstralWeb Innovate Round 2 — submitted 26 Jun 2026.</em>
+
+</body>
+</html>

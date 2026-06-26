@@ -130,10 +130,14 @@ const fadeUp: Variants = {
 
 function TelemetryBar() {
   const [time, setTime] = useState("");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const tick = () =>
-      setTime(new Date().toLocaleTimeString("en-US", { hour12: false }) + " UTC");
+    setMounted(true);
+    const tick = () => {
+      const now = new Date();
+      setTime(now.toLocaleTimeString("en-US", { hour12: false, timeZone: "UTC" }) + " UTC");
+    };
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
@@ -147,15 +151,15 @@ function TelemetryBar() {
       className="mb-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 font-mono text-[11px] uppercase tracking-[0.25em]"
       style={{ color: "var(--text-muted)" }}
     >
-      <span className="flex items-center gap-2">
+      <span className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[9px] text-emerald-400 font-bold uppercase tracking-wider">
         <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/60" />
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/80 opacity-75" />
           <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
         </span>
-        Live observation stream
+        LIVE stream
       </span>
       <span style={{ color: "var(--border-strong)" }}>·</span>
-      <span>{time || "00:00:00 UTC"}</span>
+      {mounted ? <span>{time}</span> : <span className="w-16 h-4 inline-block bg-white/5 animate-pulse rounded" />}
       <span style={{ color: "var(--border-strong)" }}>·</span>
       <span>Zenith Observation Network</span>
     </motion.div>
@@ -292,12 +296,7 @@ function FeatureCard({ f, i }: { f: (typeof FEATURES)[number]; i: number }) {
 /*  Stats strip                                                        */
 /* ------------------------------------------------------------------ */
 
-const STATS = [
-  { value: "27,600", unit: "km/h", label: "ISS orbital velocity" },
-  { value: "408", unit: "km", label: "Station altitude" },
-  { value: "16×", unit: "/ day", label: "Earth orbits completed" },
-  { value: "∞", unit: "", label: "Cosmic discoveries" },
-] as const;
+// STATS definition was moved inside Page component for dynamic live updates.
 
 /* ------------------------------------------------------------------ */
 /*  Search wrapper                                                     */
@@ -321,6 +320,64 @@ function LocationSearchWrapper() {
 /* ------------------------------------------------------------------ */
 
 export default function Page() {
+  const [statsData, setStatsData] = useState({
+    velocity: 27580,
+    altitude: 418.5,
+    orbitsPerDay: 15.54,
+    activeSatellites: 9842
+  });
+
+  useEffect(() => {
+    async function fetchLiveStats() {
+      try {
+        const issRes = await fetch("/api/iss");
+        const satRes = await fetch("/api/satellites");
+        
+        let liveVelocity = 27580;
+        let liveAltitude = 418.5;
+        let liveSatellites = 9842;
+        
+        if (issRes.ok) {
+          const issData = await issRes.json();
+          if (issData && issData.altitude) {
+            liveAltitude = issData.altitude;
+            liveVelocity = issData.velocity ?? liveVelocity;
+          }
+        }
+        
+        if (satRes.ok) {
+          const satData = await satRes.json();
+          if (satData && satData.activeCount) {
+            liveSatellites = satData.activeCount;
+          }
+        }
+
+        const R = 6371;
+        const GM = 398600.4418;
+        const a = R + liveAltitude;
+        const T_seconds = 2 * Math.PI * Math.sqrt(Math.pow(a, 3) / GM);
+        const orbits = 86400 / T_seconds;
+
+        setStatsData({
+          velocity: liveVelocity,
+          altitude: liveAltitude,
+          orbitsPerDay: orbits,
+          activeSatellites: liveSatellites
+        });
+      } catch (error) {
+        console.error("Failed to fetch live stats:", error);
+      }
+    }
+    fetchLiveStats();
+  }, []);
+
+  const STATS_DYNAMIC = useMemo(() => [
+    { value: statsData.velocity.toLocaleString(undefined, { maximumFractionDigits: 0 }), unit: "km/h", label: "ISS orbital velocity" },
+    { value: statsData.altitude.toFixed(0), unit: "km", label: "Station altitude" },
+    { value: statsData.orbitsPerDay.toFixed(2) + "×", unit: "/ day", label: "Earth orbits completed" },
+    { value: statsData.activeSatellites.toLocaleString(), unit: "", label: "Active Satellites Tracked" },
+  ], [statsData]);
+
   return (
     <main className="page-with-nav relative min-h-screen overflow-x-hidden" style={{ color: "var(--foreground)" }}>
       <ParticleBackground />
@@ -357,10 +414,9 @@ export default function Page() {
             variants={fadeUp}
             initial="hidden"
             animate="show"
-            className="text-[min(14vw,88px)] font-black leading-[0.9] tracking-tighter"
+            className="text-[min(12vw,80px)] font-black leading-[1.1] tracking-tighter flex flex-col md:flex-row md:gap-x-5 justify-center items-center py-1 text-center"
           >
             <span
-              className="block"
               style={{
                 background: "linear-gradient(135deg, #fff 30%, #93c5fd 60%, #a78bfa)",
                 WebkitBackgroundClip: "text",
@@ -371,7 +427,6 @@ export default function Page() {
               PROJECT
             </span>
             <span
-              className="block"
               style={{
                 background: "linear-gradient(135deg, #38bdf8, #818cf8 50%, #c084fc)",
                 WebkitBackgroundClip: "text",
@@ -477,7 +532,7 @@ export default function Page() {
       {/* ── STATS ── */}
       <section className="relative z-10 mx-auto w-full max-w-5xl px-6 py-20 sm:px-10">
         <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border sm:grid-cols-4" style={{ borderColor: "var(--border)" }}>
-          {STATS.map((s, i) => (
+          {STATS_DYNAMIC.map((s, i) => (
             <motion.div
               key={s.label}
               custom={i}

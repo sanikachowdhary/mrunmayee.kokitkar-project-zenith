@@ -38,7 +38,7 @@ function DashboardContent() {
   const [issData, setIssData] = useState<ISSData | null>(null);
   const [satData, setSatData] = useState<SatelliteProxyData | null>(null);
   const [localData, setLocalData] = useState(FALLBACK_DATA);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start as true to show skeletons immediately
   const [error, setError] = useState<string | null>(null);
   const [cachedAt, setCachedAt] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -63,21 +63,28 @@ function DashboardContent() {
         return;
       }
     }
-    setLat(latitude);
-    setLng(longitude);
-  }, [searchParams, latitude, longitude, setLocation]);
-
-  useEffect(() => {
-    if (typeof navigator !== "undefined" && navigator.geolocation && !searchParams.get("lat")) {
+    
+    // Attempt browser geolocation on load
+    if (typeof navigator !== "undefined" && navigator.geolocation && !urlLat) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           setLocation(pos.coords.latitude, pos.coords.longitude, "Your Location");
+          setLat(pos.coords.latitude);
+          setLng(pos.coords.longitude);
         },
-        () => {},
-        { timeout: 5000 }
+        (err) => {
+          console.warn("Geolocation denied or failed. Fallback to Mumbai:", err);
+          setLocation(19.076, 72.8777, "Mumbai");
+          setLat(19.076);
+          setLng(72.8777);
+        },
+        { timeout: 3000 } // Strict 3s timeout
       );
+    } else {
+      setLat(latitude);
+      setLng(longitude);
     }
-  }, [searchParams, setLocation]);
+  }, [searchParams, latitude, longitude, setLocation]);
 
   const loadData = useCallback(async (showSpinner = true) => {
     const currentRequestId = ++requestIdRef.current;

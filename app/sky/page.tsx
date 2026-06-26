@@ -103,8 +103,78 @@ function calculateSkyData(date: Date, coords: GeoCoords): SkyData {
 /* Premium Sky Visualization Panel                                     */
 /* ------------------------------------------------------------------ */
 
-function SkyVisualization({ data, mode, activeDate }: { data: SkyData; mode: "past" | "future"; activeDate: Date }) {
+function SkyVisualization({ data, mode, activeDate, lat }: { data: SkyData; mode: "past" | "future"; activeDate: Date; lat: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  
+  // Choose constellation based on latitude and month
+  const constellation = useMemo(() => {
+    const month = activeDate.getMonth(); // 0 = Jan, 5 = Jun
+    if (lat < 0) {
+      return {
+        name: "Southern Cross (Crux)",
+        elements: (
+          <>
+            <circle cx="200" cy="40" r="2.5" fill="white" className="animate-pulse" />
+            <circle cx="200" cy="140" r="3.0" fill="white" className="animate-pulse" />
+            <circle cx="160" cy="90" r="2.5" fill="white" className="animate-pulse" />
+            <circle cx="240" cy="90" r="2.8" fill="white" className="animate-pulse" />
+            <circle cx="215" cy="110" r="1.5" fill="white" />
+            
+            <line x1="200" y1="40" x2="200" y2="140" stroke="white" strokeWidth="0.75" strokeDasharray="3 3" />
+            <line x1="160" y1="90" x2="240" y2="90" stroke="white" strokeWidth="0.75" strokeDasharray="3 3" />
+          </>
+        )
+      };
+    } else if (month >= 4 && month <= 9) {
+      return {
+        name: "Scorpius",
+        elements: (
+          <>
+            <circle cx="180" cy="70" r="2.5" fill="#f87171" className="animate-pulse" />
+            <circle cx="160" cy="60" r="1.5" fill="white" />
+            <circle cx="150" cy="50" r="1.5" fill="white" />
+            <circle cx="195" cy="90" r="1.5" fill="white" />
+            <circle cx="210" cy="110" r="1.5" fill="white" />
+            <circle cx="205" cy="130" r="1.5" fill="white" />
+            <circle cx="190" cy="145" r="2.0" fill="white" />
+            <circle cx="175" cy="140" r="1.5" fill="white" />
+            
+            <line x1="150" y1="50" x2="160" y2="60" stroke="white" strokeWidth="0.5" />
+            <line x1="160" y1="60" x2="180" y2="70" stroke="white" strokeWidth="0.5" />
+            <line x1="180" y1="70" x2="195" y2="90" stroke="white" strokeWidth="0.5" />
+            <line x1="195" y1="90" x2="210" y2="110" stroke="white" strokeWidth="0.5" />
+            <line x1="210" y1="110" x2="205" y2="130" stroke="white" strokeWidth="0.5" />
+            <line x1="205" y1="130" x2="190" y2="145" stroke="white" strokeWidth="0.5" />
+            <line x1="190" y1="145" x2="175" y2="140" stroke="white" strokeWidth="0.5" />
+          </>
+        )
+      };
+    } else {
+      return {
+        name: "Orion",
+        elements: (
+          <>
+            <circle cx="150" cy="60" r="2.8" fill="#f87171" className="animate-pulse" />
+            <circle cx="230" cy="140" r="2.8" fill="#60a5fa" className="animate-pulse" />
+            <circle cx="210" cy="70" r="1.8" fill="white" />
+            <circle cx="170" cy="130" r="1.8" fill="white" />
+            
+            <circle cx="185" cy="100" r="1.5" fill="white" />
+            <circle cx="190" cy="100" r="1.5" fill="white" />
+            <circle cx="195" cy="100" r="1.5" fill="white" />
+            
+            <line x1="150" y1="60" x2="210" y2="70" stroke="white" strokeWidth="0.5" />
+            <line x1="150" y1="60" x2="185" y2="100" stroke="white" strokeWidth="0.5" />
+            <line x1="210" y1="70" x2="195" y2="100" stroke="white" strokeWidth="0.5" />
+            <line x1="185" y1="100" x2="195" y2="100" stroke="white" strokeWidth="0.75" />
+            <line x1="185" y1="100" x2="170" y2="130" stroke="white" strokeWidth="0.5" />
+            <line x1="195" y1="100" x2="230" y2="140" stroke="white" strokeWidth="0.5" />
+            <line x1="170" y1="130" x2="230" y2="140" stroke="white" strokeWidth="0.5" />
+          </>
+        )
+      };
+    }
+  }, [lat, activeDate]);
 
   // Sky gradient based on conditions
   const skyGradient = useMemo(() => {
@@ -239,28 +309,12 @@ function SkyVisualization({ data, mode, activeDate }: { data: SkyData; mode: "pa
 
       {/* Constellation hints at night */}
       {!data.isDay && !data.isTwilight && (
-        <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-15">
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-30">
           <svg viewBox="0 0 400 200" className="w-full h-full absolute top-0 left-0">
-            {/* Orion belt */}
-            <circle cx="160" cy="80" r="1.5" fill="white" />
-            <circle cx="175" cy="76" r="1.5" fill="white" />
-            <circle cx="190" cy="80" r="1.5" fill="white" />
-            <line x1="160" y1="80" x2="175" y2="76" stroke="white" strokeWidth="0.5" />
-            <line x1="175" y1="76" x2="190" y2="80" stroke="white" strokeWidth="0.5" />
-            {/* Big Dipper */}
-            <circle cx="280" cy="60" r="1.2" fill="white" />
-            <circle cx="295" cy="55" r="1.2" fill="white" />
-            <circle cx="310" cy="58" r="1.2" fill="white" />
-            <circle cx="320" cy="70" r="1.2" fill="white" />
-            <circle cx="315" cy="82" r="1.2" fill="white" />
-            <circle cx="305" cy="88" r="1.2" fill="white" />
-            <circle cx="295" cy="85" r="1.2" fill="white" />
-            <line x1="280" y1="60" x2="295" y2="55" stroke="white" strokeWidth="0.4" />
-            <line x1="295" y1="55" x2="310" y2="58" stroke="white" strokeWidth="0.4" />
-            <line x1="310" y1="58" x2="320" y2="70" stroke="white" strokeWidth="0.4" />
-            <line x1="320" y1="70" x2="315" y2="82" stroke="white" strokeWidth="0.4" />
-            <line x1="315" y1="82" x2="305" y2="88" stroke="white" strokeWidth="0.4" />
-            <line x1="305" y1="88" x2="295" y2="85" stroke="white" strokeWidth="0.4" />
+            <text x="20" y="30" fill="rgba(255,255,255,0.4)" fontSize="8" fontFamily="monospace" letterSpacing="1">
+              CONSTELLATION: {constellation.name.toUpperCase()}
+            </text>
+            {constellation.elements}
           </svg>
         </div>
       )}
@@ -521,7 +575,7 @@ export default function SkyTimeMachine() {
                   transition={{ duration: 0.6 }}
                   className="absolute inset-0"
                 >
-                  <SkyVisualization data={skyData} mode={vizMode === "past" ? "past" : "future"} activeDate={activeDate} />
+                  <SkyVisualization data={skyData} mode={vizMode === "past" ? "past" : "future"} activeDate={activeDate} lat={lat} />
 
                   {/* Warp flash on scrub */}
                   <motion.div

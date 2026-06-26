@@ -7,7 +7,7 @@
 | **Team** | Mrunmayee Kokitkar, Sanika Chowdhary |
 | **Competition** | AstralWeb Innovate — Round 2 |
 | **Live Demo** | [mrunmayee-kokitkar-project-zenith.vercel.app](https://mrunmayee-kokitkar-project-zenith.vercel.app) |
-| **Repository** | [github.com/mrunmayeekokitkar/mrunmayee.kokitkar-project-zenith](https://github.com/mrunmayeekokitkar/mrunmayee.kokitkar-project-zenith) |
+| **Repository** | [github.com/sanikachowdhary/mrunmayee.kokitkar-project-zenith](https://github.com/sanikachowdhary/mrunmayee.kokitkar-project-zenith) |
 | **Build Date** | 26 Jun 2026 |
 
 ---
@@ -154,7 +154,7 @@ GOOGLE_GEOCODING_API_KEY=your_google_api_key_here
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/mrunmayeekokitkar/mrunmayee.kokitkar-project-zenith.git
+git clone https://github.com/sanikachowdhary/mrunmayee.kokitkar-project-zenith.git
 cd mrunmayee.kokitkar-project-zenith
 
 # 2. Install dependencies
@@ -194,8 +194,7 @@ mrunmayee.kokitkar-project-zenith/
 │   │   ├── TimelineControls.tsx    # Sky Time Machine date/slider sync
 │   │   ├── PresetButton.tsx        # Stargazing location presets
 │   │   ├── ConstellationOverlay.tsx # Constellation lines + ISS orbit trail
-│   │   ├── APODDisplay.tsx         # NASA Astronomy Picture of the Day card
-│   │   └── NavBar.tsx              # Fixed navigation
+│   │   └── APODDisplay.tsx         # NASA Astronomy Picture of the Day card
 │   ├── lib/
 │   │   ├── api-client.ts           # Shared location store (Zustand-compatible)
 │   │   └── useLiveTimestamp.ts     # Live UTC clock hook (5s refresh)
@@ -371,6 +370,28 @@ npm start
 
 **Mrunmayee Kokitkar** — Lead Developer, 3D Visualization, API Integration  
 **Sanika Chowdhary** — UI/UX Design, Dashboard Architecture, Documentation
+
+---
+
+## Application Screenshots
+
+Here are visual mockups of the Project Zenith interfaces across different screens:
+
+### 1. Landing & Welcome Portal
+![Homepage View](public/screenshots/homepage_view.jpg)
+*The home page featuring dynamic orbital telemetry and search capability.*
+
+### 2. Telemetry Intelligence Dashboard
+![Dashboard View](public/screenshots/dashboard_view.jpg)
+*Real-time data panels displaying ISS location, meteorological seeing, and visible planets.*
+
+### 3. 3D Earth Orbit Observatory
+![Globe View](public/screenshots/globe_view.jpg)
+*Interactive 3D Earth displaying ISS path, orbital tracks, and preset views.*
+
+### 4. Sky Time Machine
+![Sky View](public/screenshots/sky_view.jpg)
+*Historical and future sky reconstruction viewport displaying seasonal constellations.*
 
 ---
 

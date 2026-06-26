@@ -10,6 +10,12 @@ import { setupConstellationOverlay, setupOrbitalTrail } from "../components/Cons
 import { LocationSearch } from "../components/LocationSearch";
 import { hydrateLocationStore } from "../lib/api-client";
 import { fetchISSPassPrediction } from "../dashboard/_components/lib/real-api";
+import dynamic from "next/dynamic";
+
+const LeafletMapFallback = dynamic(
+  () => import("./_components/LeafletMapFallback"),
+  { ssr: false }
+);
 
 interface GeographicCoordinate {
   latitude: number;
@@ -722,6 +728,14 @@ export default function GlobePage() {
       setTimeout(() => setCopySuccess(false), 2000);
     });
   }, [selected]);
+
+  if (loadError) {
+    return (
+      <main className="page-with-nav relative h-[100dvh] w-full overflow-hidden bg-[#03040a] pt-20">
+        <LeafletMapFallback presets={STARGAZING_PRESETS} />
+      </main>
+    );
+  }
 
   return (
     <main className="page-with-nav relative h-[100dvh] w-full overflow-hidden bg-[#03040a] pt-20">

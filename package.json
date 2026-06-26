@@ -1,4 +1,5 @@
 {
+  "name": "project-zenith",
   "scripts": {
     "predev": "node -e \"const{cpSync,existsSync,mkdirSync}=require('fs');const{join}=require('path');const src=join('node_modules/cesium/Build/Cesium');const dst=join('public/cesium');if(existsSync(src)){mkdirSync(dst,{recursive:true});['Workers','ThirdParty','Assets','Widgets'].forEach(f=>existsSync(join(src,f))&&cpSync(join(src,f),join(dst,f),{recursive:true}));console.log('Cesium assets copied to public/cesium');}else{console.warn('cesium not found in node_modules, skipping');}\"",
     "dev": "next dev",
@@ -8,11 +9,14 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@types/leaflet": "^1.9.21",
     "cesium": "^1.142.0",
     "framer-motion": "^12.41.0",
+    "leaflet": "^1.9.4",
     "next": "^16.2.9",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "react-leaflet": "^5.0.0",
     "satellite.js": "^7.0.1",
     "use-debounce": "^10.1.1",
     "zustand": "^5.0.14"

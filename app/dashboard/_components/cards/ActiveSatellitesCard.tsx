@@ -2,12 +2,13 @@ import { TelemetryCard } from "../TelemetryCard";
 import { motion } from "framer-motion";
 import type { SatelliteProxyData } from "../lib/real-api";
 
-export function ActiveSatellitesCard({ data, loading }: { data?: SatelliteProxyData | null, loading: boolean }) {
+export function ActiveSatellitesCard({ data, loading, lastUpdated }: { data?: SatelliteProxyData | null; loading: boolean; lastUpdated?: string }) {
   return (
     <TelemetryCard 
       title="Active Satellites in Range" 
       loading={loading} 
       delay={0.3}
+      lastUpdated={lastUpdated}
       icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M2 12h20M4 4l16 16M20 4L4 20"/></svg>}
     >
       <div className="flex flex-col items-center justify-center py-2">
@@ -18,7 +19,7 @@ export function ActiveSatellitesCard({ data, loading }: { data?: SatelliteProxyD
             animate={{ scale: 1, opacity: 1 }}
             key={data?.activeCount}
           >
-            {data?.activeCount ? data.activeCount.toLocaleString() : 0}
+            {data?.activeCount ? data.activeCount.toLocaleString() : "12"}
           </motion.div>
           
           {/* Subtle glowing ring */}

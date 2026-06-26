@@ -102,7 +102,19 @@ body {
 
 /* ── Nav spacing ── */
 .page-with-nav {
-  padding-top: var(--nav-height, 64px);
+  padding-top: calc(var(--nav-height, 64px) + 1rem);
+  margin-top: 0;
+}
+
+.globe-sidebar {
+  max-height: calc(100vh - 6rem);
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .globe-sidebar {
+    max-height: none;
+  }
 }
 
 /* ── Custom Range Scrubber ── */

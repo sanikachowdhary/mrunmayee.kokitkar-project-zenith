@@ -1,11 +1,12 @@
 import { TelemetryCard } from "../TelemetryCard";
 
-export function ISSPositionCard({ data, loading }: { data?: { lat: number; lng: number; altitude: number; velocity: number }, loading: boolean }) {
+export function ISSPositionCard({ data, loading, lastUpdated }: { data?: { lat: number; lng: number; altitude: number; velocity: number }; loading: boolean; lastUpdated?: string }) {
   return (
     <TelemetryCard 
       title="ISS Telemetry" 
       loading={loading} 
       delay={0.2}
+      lastUpdated={lastUpdated}
       icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M2 12h20M12 12l8-8M12 12l-8 8"/></svg>}
     >
       {data && (

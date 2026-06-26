@@ -3,6 +3,9 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LocationSearch } from "../components/LocationSearch";
+import { TimelineControls, getModeLabel } from "../components/TimelineControls";
+import { useLocationStore, hydrateLocationStore } from "../lib/api-client";
+import { useLiveTimestamp } from "../lib/useLiveTimestamp";
 
 /* ------------------------------------------------------------------ */
 /* Types & Math                                                        */
@@ -338,17 +341,32 @@ function MetricRow({ label, value, unit }: { label: string; value: string; unit?
 /* ------------------------------------------------------------------ */
 
 export default function SkyTimeMachine() {
-  const [lat, setLat] = useState(19.0760);
-  const [lng, setLng] = useState(72.8777);
-  const [locationName, setLocationName] = useState("Mumbai");
-  const [baseDate, setBaseDate] = useState(() => new Date().toISOString().split("T")[0]);
-  const [baseTime, setBaseTime] = useState("12:00");
+  const { latitude, longitude, locationName, setLocation } = useLocationStore();
+  const lastUpdated = useLiveTimestamp(5000);
+  const now = useMemo(() => new Date(), []);
+
+  const [lat, setLat] = useState(latitude);
+  const [lng, setLng] = useState(longitude);
+  const [locName, setLocName] = useState(locationName);
+  const [baseDate, setBaseDate] = useState(() => now.toISOString().split("T")[0]);
+  const [baseTime, setBaseTime] = useState(() => now.toISOString().split("T")[1].substring(0, 5));
   const [offsetYears, setOffsetYears] = useState(0);
-  const [activeDate, setActiveDate] = useState<Date>(new Date());
-  const [skyData, setSkyData] = useState<SkyData | null>(null);
+  const [activeDate, setActiveDate] = useState<Date>(now);
+  const [skyData, setSkyData] = useState<SkyData | null>(() => calculateSkyData(now, { lat: latitude, lng: longitude }));
   const [transitionKey, setTransitionKey] = useState(0);
 
-  const mode = offsetYears < 0 ? "past" : "future";
+  useEffect(() => {
+    hydrateLocationStore();
+  }, []);
+
+  useEffect(() => {
+    setLat(latitude);
+    setLng(longitude);
+    setLocName(locationName);
+  }, [latitude, longitude, locationName]);
+
+  const modeLabel = useMemo(() => getModeLabel(activeDate, new Date()), [activeDate]);
+  const vizMode: "past" | "future" | "live" = modeLabel === "Historical Mode" ? "past" : modeLabel === "Future Mode" ? "future" : "live";
 
   useEffect(() => {
     const d = new Date(`${baseDate}T${baseTime}:00`);
@@ -359,9 +377,17 @@ export default function SkyTimeMachine() {
     }
   }, [baseDate, baseTime, lat, lng, offsetYears]);
 
+  const handleNow = () => {
+    const current = new Date();
+    setOffsetYears(0);
+    setBaseDate(current.toISOString().split("T")[0]);
+    setBaseTime(current.toISOString().split("T")[1].substring(0, 5));
+    setTransitionKey((p) => p + 1);
+  };
+
   const handleScrub = (val: number) => {
     setOffsetYears(val);
-    setTransitionKey(p => p + 1);
+    setTransitionKey((p) => p + 1);
   };
 
   return (
@@ -374,24 +400,24 @@ export default function SkyTimeMachine() {
           <div>
             <h1 className="font-mono text-sm uppercase tracking-widest text-white">Sky Time Machine</h1>
             <p className="font-mono text-[10px] text-slate-500 uppercase tracking-wider">
-              {locationName} · {activeDate.getFullYear()}
+              {locName} · {activeDate.getFullYear()}
             </p>
           </div>
         </div>
         <AnimatePresence mode="wait">
           <motion.span
-            key={mode}
+            key={modeLabel}
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             className="rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-widest border"
             style={{
-              color: mode === "past" ? "#fbbf24" : "#a78bfa",
-              borderColor: mode === "past" ? "rgba(251,191,36,0.3)" : "rgba(167,139,250,0.3)",
-              backgroundColor: mode === "past" ? "rgba(251,191,36,0.08)" : "rgba(167,139,250,0.08)",
+              color: modeLabel === "Historical Mode" ? "#fbbf24" : modeLabel === "Future Mode" ? "#a78bfa" : "#34d399",
+              borderColor: modeLabel === "Historical Mode" ? "rgba(251,191,36,0.3)" : modeLabel === "Future Mode" ? "rgba(167,139,250,0.3)" : "rgba(52,211,153,0.3)",
+              backgroundColor: modeLabel === "Historical Mode" ? "rgba(251,191,36,0.08)" : modeLabel === "Future Mode" ? "rgba(167,139,250,0.08)" : "rgba(52,211,153,0.08)",
             }}
           >
-            {mode === "past" ? "◀ Historical Mode" : "▶ Future Mode"}
+            {modeLabel === "Live Mode" ? "● Live Mode" : modeLabel === "Historical Mode" ? "◀ Historical Mode" : "▶ Future Mode"}
           </motion.span>
         </AnimatePresence>
       </div>
@@ -407,38 +433,29 @@ export default function SkyTimeMachine() {
             <div>
               <p className="mb-2 font-mono text-[9px] uppercase tracking-widest text-slate-500">📍 Observation Site</p>
               <LocationSearch
-                defaultQuery="Mumbai"
+                defaultQuery={locName}
                 onLocationSelect={(l, lo, name) => {
                   setLat(l);
                   setLng(lo);
-                  if (name) setLocationName(name);
+                  if (name) setLocName(name);
+                  setLocation(l, lo, name);
                 }}
               />
             </div>
 
             <div className="h-px bg-white/5" />
 
-            {/* Date & Time */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1.5 block font-mono text-[9px] uppercase tracking-wider text-slate-500">📅 Date</label>
-                <input
-                  type="date"
-                  value={baseDate}
-                  onChange={e => setBaseDate(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-black/50 px-3 py-2.5 font-mono text-xs text-slate-200 outline-none focus:border-sky-400/40 transition-colors [color-scheme:dark]"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block font-mono text-[9px] uppercase tracking-wider text-slate-500">🕐 Time</label>
-                <input
-                  type="time"
-                  value={baseTime}
-                  onChange={e => setBaseTime(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-black/50 px-3 py-2.5 font-mono text-xs text-slate-200 outline-none focus:border-sky-400/40 transition-colors [color-scheme:dark]"
-                />
-              </div>
-            </div>
+            <TimelineControls
+              yearOffset={offsetYears}
+              dateString={baseDate}
+              timeString={baseTime}
+              onYearOffsetChange={handleScrub}
+              onDateChange={setBaseDate}
+              onTimeChange={setBaseTime}
+              onNow={handleNow}
+            />
+
+            <p className="text-xs text-gray-500 font-mono">Last updated: {lastUpdated}</p>
 
             <div className="h-px bg-white/5" />
 
@@ -504,7 +521,7 @@ export default function SkyTimeMachine() {
                   transition={{ duration: 0.6 }}
                   className="absolute inset-0"
                 >
-                  <SkyVisualization data={skyData} mode={mode} activeDate={activeDate} />
+                  <SkyVisualization data={skyData} mode={vizMode === "past" ? "past" : "future"} activeDate={activeDate} />
 
                   {/* Warp flash on scrub */}
                   <motion.div
@@ -552,9 +569,11 @@ export default function SkyTimeMachine() {
               <div
                 className="pointer-events-none absolute inset-0 opacity-10 transition-all duration-1000"
                 style={{
-                  background: mode === "past"
+                  background: vizMode === "past"
                     ? "linear-gradient(to right, transparent, rgba(251,191,36,0.4))"
-                    : "linear-gradient(to right, transparent, rgba(167,139,250,0.4))",
+                    : vizMode === "future"
+                    ? "linear-gradient(to right, transparent, rgba(167,139,250,0.4))"
+                    : "linear-gradient(to right, transparent, rgba(52,211,153,0.4))",
                 }}
               />
 
@@ -583,7 +602,7 @@ export default function SkyTimeMachine() {
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="font-mono text-2xl font-black"
-                    style={{ color: mode === "past" ? "#fbbf24" : "#a78bfa" }}
+                    style={{ color: vizMode === "past" ? "#fbbf24" : vizMode === "future" ? "#a78bfa" : "#34d399" }}
                   >
                     {activeDate.getFullYear()}
                   </motion.p>

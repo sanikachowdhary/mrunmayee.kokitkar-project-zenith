@@ -1,7 +1,7 @@
 import { TelemetryCard } from "../TelemetryCard";
 import { motion } from "framer-motion";
 
-export function CosmicTwinScore({ score, loading }: { score?: number, loading: boolean }) {
+export function CosmicTwinScore({ score, loading, lastUpdated }: { score?: number; loading: boolean; lastUpdated?: string }) {
   // Determine color based on score
   let colorClass = "text-sky-400";
   let bgClass = "bg-sky-400/20";
@@ -22,6 +22,7 @@ export function CosmicTwinScore({ score, loading }: { score?: number, loading: b
       title="Cosmic Twin Score" 
       loading={loading} 
       delay={0.5}
+      lastUpdated={lastUpdated}
       className="md:col-span-2"
       icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8l4 4-4 4M8 12h8"/></svg>}
     >

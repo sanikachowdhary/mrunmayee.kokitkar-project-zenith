@@ -10,9 +10,11 @@ interface TelemetryCardProps {
   loading?: boolean;
   className?: string;
   delay?: number;
+  lastUpdated?: string;
+  error?: string | null;
 }
 
-export function TelemetryCard({ title, icon, children, loading, className = "", delay = 0 }: TelemetryCardProps) {
+export function TelemetryCard({ title, icon, children, loading, className = "", delay = 0, lastUpdated, error }: TelemetryCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -36,6 +38,8 @@ export function TelemetryCard({ title, icon, children, loading, className = "", 
             <div className="h-4 w-1/2 animate-pulse rounded bg-white/5" />
             <div className="h-4 w-full animate-pulse rounded bg-white/5" />
           </div>
+        ) : error ? (
+          <p className="font-mono text-xs text-amber-400">{error}</p>
         ) : (
           <motion.div
             initial={{ opacity: 0 }}
@@ -46,6 +50,9 @@ export function TelemetryCard({ title, icon, children, loading, className = "", 
           </motion.div>
         )}
       </div>
+      {lastUpdated && (
+        <p className="text-xs text-gray-500 mt-2 font-mono">Last updated: {lastUpdated}</p>
+      )}
     </motion.div>
   );
 }

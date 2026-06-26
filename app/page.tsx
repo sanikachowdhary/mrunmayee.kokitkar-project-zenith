@@ -5,6 +5,7 @@ import { motion, useScroll, useTransform, AnimatePresence, type Variants } from 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LocationSearch as DynamicLocationSearch } from "./components/LocationSearch";
+import { useLocationStore } from "./lib/api-client";
 
 /* ------------------------------------------------------------------ */
 /*  Animated Particle Canvas                                           */
@@ -303,9 +304,13 @@ const STATS = [
 
 function LocationSearchWrapper() {
   const router = useRouter();
+  const setLocation = useLocationStore((s) => s.setLocation);
   return (
     <DynamicLocationSearch
-      onLocationSelect={() => router.push("/dashboard")}
+      onLocationSelect={(lat, lng, name) => {
+        setLocation(lat, lng, name);
+        router.push(`/dashboard?lat=${lat}&lng=${lng}`);
+      }}
     />
   );
 }
@@ -341,7 +346,7 @@ export default function Page() {
           >
             <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse" />
             <span className="font-mono text-[10px] uppercase tracking-[0.25em]" style={{ color: "var(--accent)" }}>
-              v2.0 · Advanced Space Intelligence
+              26 Jun 2026 · Celestial Intelligence Platform
             </span>
           </motion.div>
 
@@ -450,7 +455,7 @@ export default function Page() {
             className="mt-5 font-mono text-[10px] uppercase tracking-widest"
             style={{ color: "var(--text-muted)" }}
           >
-            No account · Real-time orbital data · Free forever
+            Open science · Real-time telemetry · Any coordinate on Earth
           </motion.p>
         </div>
 

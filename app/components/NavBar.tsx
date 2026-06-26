@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { name: "Globe", href: "/globe" },
   { name: "Sky Machine", href: "/sky" },
   { name: "Dashboard", href: "/dashboard" },
+  { name: "Challenge", href: "/dashboard/challenge" },
 ];
 
 export function NavBar() {

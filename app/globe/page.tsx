@@ -4,6 +4,11 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import type * as CesiumNS from "cesium";
 import { setupISSOrbit, setupConstellations, setupRadarSatellites, type SatelliteData } from "./_components/SpaceVisualizer";
+import { SpaceEventStream } from "../components/SpaceEventStream";
+import { PresetButton, STARGAZING_PRESETS } from "../components/PresetButton";
+import { setupConstellationOverlay, setupOrbitalTrail } from "../components/ConstellationOverlay";
+import { LocationSearch } from "../components/LocationSearch";
+import { hydrateLocationStore } from "../lib/api-client";
 
 interface GeographicCoordinate {
   latitude: number;
@@ -21,44 +26,15 @@ interface Landmark {
   description: string;
 }
 
-const LANDMARKS: Landmark[] = [
-  {
-    name: "Mount Everest",
-    latitude: 27.9881,
-    longitude: 86.9250,
-    range: 15000,
-    pitch: -20,
-    heading: 90,
-    description: "Highest peak on Earth, located in the Himalayas."
-  },
-  {
-    name: "Grand Canyon",
-    latitude: 36.0544,
-    longitude: -112.1401,
-    range: 22000,
-    pitch: -25,
-    heading: 45,
-    description: "Stunning steep-sided canyon carved by the Colorado River."
-  },
-  {
-    name: "Mount Fuji",
-    latitude: 35.3606,
-    longitude: 138.7274,
-    range: 16000,
-    pitch: -20,
-    heading: 180,
-    description: "Japan's tallest peak, an iconic active stratovolcano."
-  },
-  {
-    name: "Mount Vesuvius",
-    latitude: 40.8224,
-    longitude: 14.4289,
-    range: 12000,
-    pitch: -25,
-    heading: -45,
-    description: "Infamous volcano looking over the Bay of Naples, Italy."
-  }
-];
+const LANDMARKS = STARGAZING_PRESETS.map((p) => ({
+  name: p.name,
+  latitude: p.lat,
+  longitude: p.lng,
+  range: 100000,
+  pitch: -45,
+  heading: 0,
+  description: p.desc,
+}));
 
 function formatDegrees(value: number, axis: "lat" | "lon"): string {
   const hemisphere =
@@ -75,6 +51,7 @@ export default function GlobePage() {
 
   // Core loading states
   const [isLoading, setIsLoading] = useState(true);
+  const [loadProgress, setLoadProgress] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selected, setSelected] = useState<GeographicCoordinate | null>(null);
   const [selectedSatellite, setSelectedSatellite] = useState<SatelliteData | null>(null);
@@ -86,6 +63,8 @@ export default function GlobePage() {
   const [copySuccess, setCopySuccess] = useState(false);
   const [showISS, setShowISS] = useState(true);
   const [showConstellations, setShowConstellations] = useState(false);
+  const [showOrbitTrail, setShowOrbitTrail] = useState(false);
+  const [showConstellationOverlay, setShowConstellationOverlay] = useState(false);
 
   // New features state
   const [isNightMode, setIsNightMode] = useState(true);
@@ -95,11 +74,6 @@ export default function GlobePage() {
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<{ sender: "user" | "ai"; text: string }[]>([
     { sender: "ai", text: "Welcome Observer. Lock onto a coordinate or click Stargazing targets to begin telemetry report." }
-  ]);
-  const [eventFeed, setEventFeed] = useState<{ id: string; time: string; text: string; category: string }[]>([
-    { id: "1", time: "21:38:02 UTC", text: "ISS telemetry lock established at 418km altitude.", category: "iss" },
-    { id: "2", time: "21:40:15 UTC", text: "Solar wind velocity: 418 km/s, direction vector: radial.", category: "weather" },
-    { id: "3", time: "21:42:30 UTC", text: "Starlink-2215 diagnostic ping payload completed.", category: "satellite" },
   ]);
 
   // Gamification: Mission Mode state
@@ -114,6 +88,8 @@ export default function GlobePage() {
   const issDataSourceRef = useRef<CesiumNS.CustomDataSource | null>(null);
   const constellationsDataSourceRef = useRef<CesiumNS.CustomDataSource | null>(null);
   const radarDataSourceRef = useRef<CesiumNS.CustomDataSource | null>(null);
+  const constellationOverlayRef = useRef<CesiumNS.CustomDataSource | null>(null);
+  const orbitTrailRef = useRef<CesiumNS.CustomDataSource | null>(null);
 
   // Sync ref for callback handlers to prevent stale closure issues
   const selectedRef = useRef<GeographicCoordinate | null>(null);
@@ -207,33 +183,24 @@ export default function GlobePage() {
     return Math.round((completed / missionTasks.length) * 100);
   }, [missionTasks]);
 
-  // Bloomberg space news event generator
+  // Load progress animation
   useEffect(() => {
-    const categories = ["iss", "weather", "satellite", "astronomy"];
-    const events = [
-      { text: "Solar wind speed surges to 480 km/s. Geomagnetic storm warning active.", category: "weather" },
-      { text: "ISS successfully completed orbit transit over East Africa.", category: "iss" },
-      { text: "GPS navigation satellite constellation updates atomic clock timing parameters.", category: "satellite" },
-      { text: "NASA deep space downlink confirms Hubble space telescope orientation is nominal.", category: "astronomy" },
-      { text: "Active sunspot region AR3243 triggers minor M-class solar flare.", category: "weather" },
-      { text: "Tiangong Space Station crew completes orbital maintenance sequence.", category: "iss" },
-      { text: "James Webb Space Telescope initiates deep field imaging calibration sequence.", category: "astronomy" },
-      { text: "Starlink broadband payload deploys successfully into low earth orbit.", category: "satellite" },
-    ];
-
+    if (!isLoading) {
+      setLoadProgress(100);
+      return;
+    }
     const interval = setInterval(() => {
-      const randomEvent = events[Math.floor(Math.random() * events.length)];
-      const utcTime = new Date().toLocaleTimeString("en-US", { hour12: false, timeZone: "UTC" }) + " UTC";
-      const newEntry = {
-        id: Math.random().toString(),
-        time: utcTime,
-        text: randomEvent.text,
-        category: randomEvent.category
-      };
-      setEventFeed(prev => [newEntry, ...prev.slice(0, 10)]);
-    }, 15000);
+      setLoadProgress((prev) => Math.min(prev + Math.random() * 30, 90));
+    }, 200);
+    const timeout = setTimeout(() => setLoadProgress(100), 2000);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [isLoading]);
 
-    return () => clearInterval(interval);
+  useEffect(() => {
+    hydrateLocationStore();
   }, []);
 
   // AI Chat Assistant message response handler
@@ -472,6 +439,9 @@ export default function GlobePage() {
       constellationsDataSourceRef.current = setupConstellations(viewer, Cesium);
       constellationsDataSourceRef.current.show = showConstellations;
 
+      constellationOverlayRef.current = setupConstellationOverlay(viewer, Cesium, showConstellationOverlay);
+      orbitTrailRef.current = setupOrbitalTrail(viewer, Cesium, showOrbitTrail);
+
       setIsLoading(false);
       } catch (err) {
         console.error("Cesium init failed:", err);
@@ -494,6 +464,8 @@ export default function GlobePage() {
       if (viewer && !viewer.isDestroyed()) {
         if (issDataSourceRef.current) viewer.dataSources.remove(issDataSourceRef.current, true);
         if (constellationsDataSourceRef.current) viewer.dataSources.remove(constellationsDataSourceRef.current, true);
+        if (constellationOverlayRef.current) viewer.dataSources.remove(constellationOverlayRef.current, true);
+        if (orbitTrailRef.current) viewer.dataSources.remove(orbitTrailRef.current, true);
         if (radarDataSourceRef.current) viewer.dataSources.remove(radarDataSourceRef.current, true);
         viewer.destroy();
       }
@@ -513,6 +485,18 @@ export default function GlobePage() {
       constellationsDataSourceRef.current.show = showConstellations;
     }
   }, [showConstellations]);
+
+  useEffect(() => {
+    if (constellationOverlayRef.current) {
+      constellationOverlayRef.current.show = showConstellationOverlay;
+    }
+  }, [showConstellationOverlay]);
+
+  useEffect(() => {
+    if (orbitTrailRef.current) {
+      orbitTrailRef.current.show = showOrbitTrail;
+    }
+  }, [showOrbitTrail]);
 
   // ── Sync Satellite Radar Mode ──
   useEffect(() => {
@@ -636,14 +620,15 @@ export default function GlobePage() {
     }
 
     const targetCartesian = Cesium.Cartesian3.fromDegrees(landmark.longitude, landmark.latitude, 0);
-    viewer.camera.flyToBoundingSphere(new Cesium.BoundingSphere(targetCartesian, 0), {
-      offset: new Cesium.HeadingPitchRange(
-        Cesium.Math.toRadians(landmark.heading),
-        Cesium.Math.toRadians(landmark.pitch),
-        landmark.range
-      ),
+    viewer.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(landmark.longitude, landmark.latitude, 100000),
       duration: 2.2,
-      easingFunction: Cesium.EasingFunction.QUADRATIC_IN_OUT,
+      complete: () => {
+        viewer.camera.lookAt(
+          Cesium.Cartesian3.fromDegrees(landmark.longitude, landmark.latitude, 50000),
+          new Cesium.HeadingPitchRange(0, -Math.PI / 4, 100000)
+        );
+      },
     });
   }, []);
 
@@ -690,7 +675,7 @@ export default function GlobePage() {
   }, [selected]);
 
   return (
-    <main className="relative h-[100dvh] w-full overflow-hidden bg-[#03040a]">
+    <main className="relative h-[100dvh] w-full overflow-hidden bg-[#03040a] pt-20">
       {/* 3D Globe Container */}
       <div ref={containerRef} className="absolute inset-0" />
 
@@ -702,7 +687,7 @@ export default function GlobePage() {
 
       {/* ── Loading Overlay ── */}
       {(isLoading || loadError) && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-[#03040a] transition-opacity duration-700">
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-black/50 transition-opacity duration-700">
           {loadError ? (
             <div className="flex flex-col items-center gap-3 px-6 text-center">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01" strokeLinecap="round"/></svg>
@@ -710,26 +695,19 @@ export default function GlobePage() {
               <p className="font-mono text-[10px] text-slate-500 max-w-xs">{loadError}</p>
             </div>
           ) : (
-            <>
-              <div className="relative h-16 w-16">
-                <span className="absolute inset-0 animate-spin rounded-full border-2 border-sky-500/10 border-t-sky-400" />
-                <span className="absolute inset-2 rounded-full bg-sky-400/5 blur-md" />
+            <div className="text-white text-center">
+              <p className="mb-4 font-mono text-xs uppercase tracking-[0.3em]">Initializing 3D Engine</p>
+              <div className="w-48 h-2 bg-gray-700 rounded overflow-hidden mx-auto">
+                <div className="h-full bg-blue-500 transition-all duration-200" style={{ width: `${loadProgress}%` }} />
               </div>
-              <div className="flex flex-col items-center gap-2">
-                <p className="font-mono text-xs uppercase tracking-[0.3em] text-slate-300">
-                  Initializing Earth Render
-                </p>
-                <p className="font-mono text-[10px] tracking-widest text-slate-500">
-                  Project Zenith &middot; Loading 3D Engine
-                </p>
-              </div>
-            </>
+              <p className="text-sm mt-2 font-mono">{Math.round(loadProgress)}%</p>
+            </div>
           )}
         </div>
       )}
 
       {/* ── Floating Header Chrome ── */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between p-6">
+      <div className="pointer-events-none absolute inset-x-0 top-20 z-20 flex items-center justify-between p-6">
         {/* Logo / Telemetry */}
         <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-white/5 bg-slate-950/40 px-4 py-2 backdrop-blur-md">
           <span className="block h-2 w-2 rounded-full bg-sky-400 shadow-[0_0_12px_2px_rgba(56,167,255,0.7)] animate-pulse" />
@@ -821,38 +799,36 @@ export default function GlobePage() {
         </div>
       )}
 
-      {/* ── Right Side: Bloomberg Space News Feed Sidebar ── */}
-      <div className="absolute top-24 right-6 z-20 w-80 pointer-events-auto h-[55vh] flex flex-col">
-        <div className="flex-1 relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950/70 shadow-[0_8px_32px_rgba(0,0,0,0.6)] backdrop-blur-xl flex flex-col">
-          <div className="absolute -inset-px rounded-2xl bg-gradient-to-br from-white/5 via-transparent to-white/5 pointer-events-none" />
-          
-          {/* Header */}
-          <div className="p-4 border-b border-white/5 flex items-center justify-between bg-black/20">
-            <div className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
-              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-200 font-bold">Space Event Stream</span>
-            </div>
-            <span className="font-mono text-[8px] uppercase tracking-wider text-slate-400">Bloomberg Mode</span>
-          </div>
+      {/* ── Left Side: Controls + Location ── */}
+      <div className="absolute top-24 left-6 z-20 w-72 max-h-[calc(100vh-6rem)] overflow-y-auto pointer-events-auto flex flex-col gap-4">
+        <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 backdrop-blur-xl">
+          <LocationSearch showCurrentLocation />
+        </div>
+      </div>
 
-          {/* Scrolling Feed Container */}
-          <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 font-mono text-[10px] leading-relaxed">
-            {eventFeed.map((e) => (
-              <div key={e.id} className="p-2.5 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-slate-500 text-[8px]">{e.time}</span>
-                  <span className={`px-1.5 py-0.5 rounded-[4px] text-[7px] uppercase tracking-wider ${
-                    e.category === "iss" ? "bg-cyan-500/10 text-cyan-400 border border-cyan-400/20" :
-                    e.category === "weather" ? "bg-amber-500/10 text-amber-400 border border-amber-400/20" :
-                    e.category === "satellite" ? "bg-purple-500/10 text-purple-400 border border-purple-400/20" :
-                    "bg-sky-500/10 text-sky-400 border border-sky-400/20"
-                  }`}>
-                    {e.category}
-                  </span>
-                </div>
-                <p className="text-slate-300">{e.text}</p>
-              </div>
-            ))}
+      {/* ── Right Side: Space Event Stream + Simulation Timeline ── */}
+      <div className="absolute top-24 right-6 z-20 w-80 pointer-events-auto max-h-[calc(100vh-6rem)] flex flex-col gap-4">
+        <SpaceEventStream />
+
+        <div className="flex-1 min-h-0 relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950/70 shadow-[0_8px_32px_rgba(0,0,0,0.6)] backdrop-blur-xl flex flex-col">
+          <div className="p-4 border-b border-white/5 flex items-center justify-between bg-black/20 shrink-0">
+            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-200 font-bold">Simulation Timeline</span>
+            <span className="font-mono text-[8px] uppercase tracking-wider text-slate-400">Observatory Mode</span>
+          </div>
+          <div className="p-4 flex flex-col gap-3">
+            <div className="flex justify-between items-center font-mono text-[9px] text-slate-500 uppercase tracking-widest">
+              <span>Hour Offset</span>
+              <span className="text-slate-300 font-bold">{timelineOffset === 0 ? "Realtime" : `${timelineOffset > 0 ? "+" : ""}${timelineOffset} Hours`}</span>
+            </div>
+            <input
+              type="range"
+              min="-24"
+              max="24"
+              step="1"
+              value={timelineOffset}
+              onChange={(e) => setTimelineOffset(parseInt(e.target.value))}
+              className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-500 min-h-[44px]"
+            />
           </div>
         </div>
       </div>
@@ -1028,21 +1004,39 @@ export default function GlobePage() {
             <div className="absolute -inset-px rounded-2xl bg-gradient-to-br from-white/5 via-transparent to-white/5 pointer-events-none" />
 
             <div className="relative flex flex-col gap-4">
-              {/* Timeline Scrubber Header */}
-              <div className="flex flex-col gap-1">
-                <div className="flex justify-between items-center font-mono text-[9px] text-slate-500 uppercase tracking-widest">
-                  <span>Simulation Timeline</span>
-                  <span className="text-slate-300 font-bold">{timelineOffset === 0 ? "Realtime" : `${timelineOffset > 0 ? "+" : ""}${timelineOffset} Hours`}</span>
-                </div>
-                <input
-                  type="range"
-                  min="-24"
-                  max="24"
-                  step="1"
-                  value={timelineOffset}
-                  onChange={(e) => setTimelineOffset(parseInt(e.target.value))}
-                  className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-500"
-                />
+              {/* Timeline Scrubber Header - moved to right sidebar */}
+              <div className="hidden" />
+
+              {/* Constellation Lines Toggle */}
+              <div className="flex items-center justify-between border-t border-white/5 pt-3">
+                <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-slate-400 font-medium">
+                  ✨ Constellation Lines
+                </span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showConstellationOverlay}
+                    onChange={(e) => setShowConstellationOverlay(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-500"></div>
+                </label>
+              </div>
+
+              {/* Orbit Trail Toggle */}
+              <div className="flex items-center justify-between border-t border-white/5 pt-3">
+                <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-slate-400 font-medium">
+                  🛰 Orbit Trail
+                </span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showOrbitTrail}
+                    onChange={(e) => setShowOrbitTrail(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500"></div>
+                </label>
               </div>
 
               {/* Satellite Radar Mode Toggle */}
@@ -1103,20 +1097,16 @@ export default function GlobePage() {
                 Stargazing Presets
               </p>
               <div className="grid grid-cols-2 gap-2">
-                {LANDMARKS.map((landmark) => (
-                  <button
-                    key={landmark.name}
-                    type="button"
-                    onClick={() => handleFlyToLandmark(landmark)}
-                    className="flex flex-col items-start text-left rounded-xl border border-white/5 bg-slate-900/40 p-2.5 hover:border-sky-400/20 hover:bg-slate-900/80 transition-all cursor-pointer group"
-                  >
-                    <span className="font-sans text-[11px] font-semibold text-slate-200 group-hover:text-sky-300 transition-colors">
-                      {landmark.name}
-                    </span>
-                    <span className="font-mono text-[8px] text-slate-500 uppercase tracking-wider mt-0.5">
-                      {formatDegrees(landmark.latitude, "lat")}
-                    </span>
-                  </button>
+                {STARGAZING_PRESETS.map((preset) => (
+                  <PresetButton
+                    key={preset.name}
+                    preset={preset}
+                    viewerRef={viewerRef}
+                    cesiumRef={cesiumRef}
+                    onSelect={(lat, lng, name) => {
+                      setSelected({ latitude: lat, longitude: lng, height: 0 });
+                    }}
+                  />
                 ))}
               </div>
             </div>

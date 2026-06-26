@@ -1,12 +1,13 @@
 import { TelemetryCard } from "../TelemetryCard";
 import type { WeatherData } from "../lib/api-mock";
 
-export function ObservationConditions({ data, loading }: { data?: WeatherData, loading: boolean }) {
+export function ObservationConditions({ data, loading, lastUpdated }: { data?: WeatherData; loading: boolean; lastUpdated?: string }) {
   return (
     <TelemetryCard 
       title="Observation Conditions" 
       loading={loading} 
       delay={0.4}
+      lastUpdated={lastUpdated}
       icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.5 19c2.5 0 4.5-2 4.5-4.5S20 10 17.5 10c-.5-3.5-3.5-6-7-6-3.8 0-7 3.1-7 7 0 .2.1.4.1.6C1.6 12.1 0 14.1 0 16.5 0 19.3 2.2 21.5 5 21.5h12.5z"/></svg>}
     >
       {data && (

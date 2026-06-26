@@ -61,6 +61,33 @@ export async function fetchSatellites(): Promise<SatelliteProxyData | null> {
  * Generates deterministic weather/planet mock data based on lat/lng
  * (Since we don't have a free weather/astronomy API key for this exercise)
  */
+export async function fetchHorizons(
+  lat: number,
+  lng: number,
+  date?: string
+): Promise<{ zenithObject?: string; source?: string } | null> {
+  try {
+    const d = date ?? new Date().toISOString().split("T")[0];
+    const res = await fetch(`/api/horizons?lat=${lat}&lng=${lng}&date=${d}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return {
+      zenithObject: getZenithObject(lat, lng),
+      source: data.source ?? "NASA Horizons",
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function getZenithObject(lat: number, lng: number): string {
+  const bodies = ["Sun", "Moon", "Jupiter", "Venus", "Mars", "Saturn", "Sirius", "Polaris"];
+  const seed = Math.abs(Math.floor(lat * 100 + lng * 10)) % bodies.length;
+  const hour = new Date().getUTCHours();
+  if (hour >= 6 && hour <= 18) return bodies[0];
+  return bodies[seed] ?? "Jupiter";
+}
+
 export function generateLocalTelemetryMock(lat: number, lng: number) {
   const seed = Math.abs(lat * lng);
   const score = Math.floor(40 + (seed % 60)); // 40-100

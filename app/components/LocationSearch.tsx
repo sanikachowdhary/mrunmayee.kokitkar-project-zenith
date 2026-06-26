@@ -33,7 +33,7 @@ export function LocationSearch({
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function handlePointerOutside(event: PointerEvent) {
+    function handlePointerOutside(event: Event) {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 export const revalidate = 3600;
 
 const HORIZONS_BASE = "https://ssd.jpl.nasa.gov/api/horizons.api";

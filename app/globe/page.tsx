@@ -371,7 +371,7 @@ export default function GlobePage() {
         const pickedObject = viewer.scene.pick(movement.position);
         if (Cesium.defined(pickedObject) && pickedObject.id) {
           const entity = pickedObject.id as CesiumNS.Entity;
-          const customData = (entity as any).customData as SatelliteData | undefined;
+          const customData = ((entity as unknown) as Record<string, unknown>).customData as SatelliteData | undefined;
           if (customData) {
             setSelectedSatellite(customData);
             setSelected(null); // Clear selected terrain card

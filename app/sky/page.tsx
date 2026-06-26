@@ -54,7 +54,7 @@ function calculateSkyData(date: Date, coords: GeoCoords): SkyData {
 
   let gmst = 18.697374558 + 24.06570982441908 * d;
   gmst = ((gmst % 24) + 24) % 24;
-  let lmst = ((gmst + coords.lng / 15) % 24 + 24) % 24;
+  const lmst = ((gmst + coords.lng / 15) % 24 + 24) % 24;
 
   const q = (280.459 + 0.98564736 * d) % 360;
   const g = ((357.529 + 0.98560028 * d) % 360) * (Math.PI / 180);
@@ -62,7 +62,7 @@ function calculateSkyData(date: Date, coords: GeoCoords): SkyData {
   const epsilon = (23.439 - 0.00000036 * d) * (Math.PI / 180);
 
   let ra = Math.atan2(Math.cos(epsilon) * Math.sin(eclipticLon), Math.cos(eclipticLon));
-  let dec = Math.asin(Math.sin(epsilon) * Math.sin(eclipticLon));
+  const dec = Math.asin(Math.sin(epsilon) * Math.sin(eclipticLon));
   ra = (((ra * 180 / Math.PI) / 15) + 24) % 24;
 
   const ha = (lmst - ra) * 15 * (Math.PI / 180);
@@ -75,7 +75,7 @@ function calculateSkyData(date: Date, coords: GeoCoords): SkyData {
 
   const synodicMonth = 29.53058867;
   const knownNewMoon = new Date(Date.UTC(2000, 0, 6, 18, 14)).getTime();
-  let phase = ((date.getTime() - knownNewMoon) / 86400000) % synodicMonth;
+  const phase = ((date.getTime() - knownNewMoon) / 86400000) % synodicMonth;
   const moonPhaseOut = ((phase / synodicMonth) + 1) % 1;
 
   const cosW0 = (Math.sin(-0.0145) - Math.sin(latRad) * Math.sin(dec)) / (Math.cos(latRad) * Math.cos(dec));

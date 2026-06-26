@@ -346,7 +346,7 @@ export function setupRadarSatellites(
     });
 
     // Attach custom metadata
-    (satEntity as any).customData = sat;
+    ((satEntity as unknown) as Record<string, unknown>).customData = sat;
   });
 
   viewer.dataSources.add(ds);

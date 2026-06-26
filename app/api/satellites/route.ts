@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 // CelesTrak TLE JSON format approximation
 interface CelesTrakEntry {
   OBJECT_NAME: string;

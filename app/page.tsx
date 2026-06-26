@@ -546,7 +546,7 @@ export default function Page() {
             Featured: Astronomy Picture
           </h2>
           <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-            NASA's daily exploration of the cosmos
+            NASA&apos;s daily exploration of the cosmos
           </p>
         </motion.div>
         <motion.div
@@ -586,7 +586,7 @@ export default function Page() {
                 The sky changes every night.
               </h2>
               <p className="mx-auto mt-4 max-w-md text-base" style={{ color: "var(--text-secondary)" }}>
-                Set your location and Zenith keeps watch — so you always know what's worth stepping outside for.
+                Set your location and Zenith keeps watch — so you always know what&apos;s worth stepping outside for.
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-3">
                 <Link href="/globe">

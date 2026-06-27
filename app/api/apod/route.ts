@@ -13,12 +13,23 @@ interface APODResponse {
   url: string;
 }
 
-const NASA_API_KEY = process.env.NASA_API_KEY || "DEMO_KEY";
+// Fallback APOD if API is unavailable
+const FALLBACK_APOD = {
+  title: "The Pillars of Creation",
+  date: "2026-06-26",
+  explanation: "Eagle Nebula's iconic pillars of gas and dust, as seen by the Hubble Space Telescope.",
+  url: "https://apod.nasa.gov/apod/image/2301/PillarsEagle_HubblePescador_960.jpg",
+  hdurl: "https://apod.nasa.gov/apod/image/2301/PillarsEagle_HubblePescador_960.jpg",
+  media_type: "image",
+  copyright: "NASA/ESA/Hubble"
+};
 
 export async function GET() {
+  const key = process.env.NASA_API_KEY ?? "DEMO_KEY";
+
   try {
     const url = new URL("https://api.nasa.gov/planetary/apod");
-    url.searchParams.set("api_key", NASA_API_KEY);
+    url.searchParams.set("api_key", key);
 
     const res = await fetch(url.toString(), {
       cache: "force-cache", // Cache for 24 hours by default
@@ -26,11 +37,16 @@ export async function GET() {
     });
 
     if (!res.ok) {
-      console.error(`NASA APOD API returned status: ${res.status}`);
-      return NextResponse.json(
-        { error: "Failed to fetch APOD data" },
-        { status: res.status }
-      );
+      console.warn(`NASA APOD API returned status: ${res.status}. Using fallback.`);
+      return NextResponse.json({
+        title: FALLBACK_APOD.title,
+        explanation: FALLBACK_APOD.explanation,
+        url: FALLBACK_APOD.url,
+        hdurl: FALLBACK_APOD.hdurl,
+        date: FALLBACK_APOD.date,
+        copyright: FALLBACK_APOD.copyright,
+        mediaType: FALLBACK_APOD.media_type,
+      });
     }
 
     const data: APODResponse = await res.json();
@@ -45,10 +61,15 @@ export async function GET() {
       mediaType: data.media_type,
     });
   } catch (error) {
-    console.error("Failed to fetch NASA APOD:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch NASA APOD data" },
-      { status: 500 }
-    );
+    console.error("Failed to fetch NASA APOD, returning fallback:", error);
+    return NextResponse.json({
+      title: FALLBACK_APOD.title,
+      explanation: FALLBACK_APOD.explanation,
+      url: FALLBACK_APOD.url,
+      hdurl: FALLBACK_APOD.hdurl,
+      date: FALLBACK_APOD.date,
+      copyright: FALLBACK_APOD.copyright,
+      mediaType: FALLBACK_APOD.media_type,
+    });
   }
 }

@@ -8,7 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 const NAV_LINKS = [
   { name: "Home", href: "/" },
   { name: "Globe", href: "/globe" },
-  { name: "Sky Time Machine", href: "/sky" },
+  { name: "Sky", href: "/sky" },
   { name: "Dashboard", href: "/dashboard" },
   { name: "Challenge", href: "/dashboard/challenge" },
 ];

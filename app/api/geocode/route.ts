@@ -6,10 +6,10 @@ export interface GeocodeResult {
   lat: number;
   lng: number;
   displayName: string;
-  accuracy: "coordinates" | "geocoded" | "google";
+  accuracy: "coordinates" | "geocoded" | "google" | "reverse";
 }
 
-function parseCoordinates(query: string): GeocodeResult | null {
+function parseCoordinates(query: string): { lat: number; lng: number } | null {
   const match = query.trim().match(/^(-?\d+(?:\.\d+)?)[,\s]+(-?\d+(?:\.\d+)?)$/);
   if (!match) return null;
   const lat = parseFloat(match[1]);
@@ -17,12 +17,53 @@ function parseCoordinates(query: string): GeocodeResult | null {
   if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
     return null;
   }
-  return {
-    lat,
-    lng,
-    displayName: `${lat.toFixed(4)}, ${lng.toFixed(4)}`,
-    accuracy: "coordinates",
-  };
+  return { lat, lng };
+}
+
+/** Special-case named locations (poles, oceans) for better UX */
+function getSpecialName(lat: number, lng: number): string | null {
+  if (lat > 89.5) return "North Pole";
+  if (lat < -89.5) return "South Pole";
+  if (lat > 66.5) return `Arctic Circle (${lat.toFixed(2)}°N)`;
+  if (lat < -66.5) return `Antarctic Circle (${Math.abs(lat).toFixed(2)}°S)`;
+
+  // Pacific Ocean remoteness — Point Nemo area
+  if (Math.abs(lat) < 50 && (lng < -100 || lng > 150) && Math.abs(lat) > 5) {
+    return `Pacific Ocean (${Math.abs(lat).toFixed(2)}°${lat >= 0 ? "N" : "S"})`;
+  }
+  return null;
+}
+
+async function reverseGeocodeNominatim(lat: number, lng: number): Promise<GeocodeResult | null> {
+  const special = getSpecialName(lat, lng);
+  if (special) {
+    return { lat, lng, displayName: special, accuracy: "reverse" };
+  }
+
+  const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`;
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "ProjectZenith/1.0 (hackathon; contact@zenith.app)",
+        "Accept-Language": "en",
+      },
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.error) {
+      // Nominatim returns {error: "Unable to geocode"} for ocean coords
+      return {
+        lat, lng,
+        displayName: `Open Ocean (${Math.abs(lat).toFixed(2)}°${lat >= 0 ? "N" : "S"}, ${Math.abs(lng).toFixed(2)}°${lng >= 0 ? "E" : "W"})`,
+        accuracy: "reverse",
+      };
+    }
+    const name = data.display_name ?? `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    return { lat, lng, displayName: name, accuracy: "reverse" };
+  } catch {
+    return null;
+  }
 }
 
 async function geocodeNominatim(query: string): Promise<GeocodeResult | null> {
@@ -68,11 +109,21 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const coordResult = parseCoordinates(q);
-    if (coordResult) {
-      return NextResponse.json(coordResult);
+    // If input looks like coordinates, do REVERSE geocoding
+    const coords = parseCoordinates(q);
+    if (coords) {
+      const reversed = await reverseGeocodeNominatim(coords.lat, coords.lng);
+      if (reversed) return NextResponse.json(reversed);
+      // Fallback: return bare coordinates
+      return NextResponse.json({
+        lat: coords.lat,
+        lng: coords.lng,
+        displayName: `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`,
+        accuracy: "coordinates",
+      });
     }
 
+    // Otherwise do forward geocoding
     let result = await geocodeNominatim(q);
 
     if (!result && process.env.GOOGLE_GEOCODING_API_KEY) {

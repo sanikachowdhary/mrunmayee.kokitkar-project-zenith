@@ -1,16 +1,15 @@
-// next.config.ts
-//
-// Production builds use Webpack (via `next build --webpack` in package.json).
-// Dev uses Turbopack (via `next dev --turbopack`).
-//
-// Webpack config handles node: URI scheme fallbacks needed for any packages
-// that reference Node.js built-ins (e.g., satellite.js wasm builds).
-//
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  turbopack: {}, // used only for dev (next dev --turbopack)
+  turbopack: {}, // explicit empty config silences the webpack/Turbopack warning
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "apod.nasa.gov" },
+      { protocol: "https", hostname: "*.nasa.gov" },
+      { protocol: "https", hostname: "cesium.com" },
+    ],
+  },
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Handle node: URI scheme — browser can't use these, set to false
@@ -31,6 +30,9 @@ const nextConfig: NextConfig = {
     // Silence unknown context critical warnings from large packages
     config.module = config.module || {};
     config.module.unknownContextCritical = false;
+
+    // External mapping for Cesium
+    config.externals = [...(config.externals || []), { cesium: "Cesium" }];
 
     return config;
   },

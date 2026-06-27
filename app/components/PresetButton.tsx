@@ -12,11 +12,11 @@ export interface StargazingPreset {
 }
 
 export const STARGAZING_PRESETS: StargazingPreset[] = [
-  { name: "Mount Everest", lat: 27.9881, lng: 86.925, desc: "Highest mountain" },
-  { name: "Svalbard", lat: 78.2232, lng: 15.6267, desc: "Arctic polar region" },
-  { name: "Atacama Desert", lat: -23.0645, lng: -68.3725, desc: "Lowest light pollution" },
-  { name: "Pacific Ocean", lat: 0, lng: -150, desc: "Open ocean" },
-  { name: "Sahara Desert", lat: 25.0, lng: 10.0, desc: "Desert region" },
+  { name: "Mount Everest", lat: 27.9881, lng: 86.9250, desc: "Thin atmosphere high observatory" },
+  { name: "Atacama Desert", lat: -22.9068, lng: -67.9290, desc: "Premier observation site on Earth" },
+  { name: "Svalbard", lat: 78.2232, lng: 15.6267, desc: "Arctic circle auroral window" },
+  { name: "Sahara Desert", lat: 23.4162, lng: 25.6628, desc: "Cloudless thermal desert region" },
+  { name: "Pacific Ocean", lat: -0.0000, lng: -170.0000, desc: "Remote maritime void stargazing" },
 ];
 
 interface PresetButtonProps {
@@ -42,15 +42,18 @@ export function PresetButton({ preset, viewerRef, cesiumRef, onSelect }: PresetB
     setLocation(preset.lat, preset.lng, preset.name);
     onSelect?.(preset.lat, preset.lng, preset.name);
 
+    // Reset camera tracking constraints
+    viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
+
+    // Fly to 12 km altitude and tilt 35 degrees UP to view the sky
     viewer.camera.flyTo({
-      destination: Cesium.Cartesian3.fromDegrees(preset.lng, preset.lat, 100000),
-      duration: 2.2,
-      complete: () => {
-        viewer.camera.lookAt(
-          Cesium.Cartesian3.fromDegrees(preset.lng, preset.lat, 50000),
-          new Cesium.HeadingPitchRange(0, -Math.PI / 4, 100000)
-        );
+      destination: Cesium.Cartesian3.fromDegrees(preset.lng, preset.lat, 12000),
+      orientation: {
+        heading: Cesium.Math.toRadians(0),
+        pitch: Cesium.Math.toRadians(35),
+        roll: 0.0
       },
+      duration: 2.2,
     });
   }, [preset, viewerRef, cesiumRef, setLocation, onSelect]);
 
@@ -63,10 +66,10 @@ export function PresetButton({ preset, viewerRef, cesiumRef, onSelect }: PresetB
       <span className="font-sans text-[11px] font-semibold text-slate-200 group-hover:text-sky-300 transition-colors">
         {preset.name}
       </span>
-      <span className="font-mono text-[8px] text-slate-500 uppercase tracking-wider mt-0.5">
-        {formatDegrees(preset.lat, "lat")}
+      <span className="font-mono text-[8px] text-slate-400 uppercase tracking-wider mt-0.5">
+        {formatDegrees(preset.lat, "lat")}, {formatDegrees(preset.lng, "lon")}
       </span>
-      <span className="font-mono text-[7px] text-slate-600 mt-0.5">{preset.desc}</span>
+      <span className="font-mono text-[7px] text-slate-500 mt-0.5 leading-normal">{preset.desc}</span>
     </button>
   );
 }

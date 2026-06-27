@@ -9,6 +9,8 @@ interface SpaceEvent {
   lat: number;
   lng: number;
   alt: number;
+  type: "iss" | "satellite" | "weather";
+  label: string;
 }
 
 interface ISSResponse {
@@ -19,8 +21,30 @@ interface ISSResponse {
   velocity?: number;
 }
 
+// Static seed events to show immediately on page load
+const STATIC_EVENTS: SpaceEvent[] = [
+  {
+    id: "static-celestrak-1",
+    time: "Pre-loaded",
+    lat: 51.6,
+    lng: -3.2,
+    alt: 408.3,
+    type: "satellite",
+    label: "CelesTrak: Sentinel-6A passed over Atlantic corridor",
+  },
+  {
+    id: "static-weather-1",
+    time: "Pre-loaded",
+    lat: 23.5,
+    lng: 121.0,
+    alt: 705.0,
+    type: "weather",
+    label: "NOAA-20: Tropical cyclone imagery captured over Pacific",
+  },
+];
+
 export function SpaceEventStream() {
-  const [events, setEvents] = useState<SpaceEvent[]>([]);
+  const [events, setEvents] = useState<SpaceEvent[]>(STATIC_EVENTS);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState(false);
   const lastUpdated = useLiveTimestamp(1000);
@@ -48,12 +72,13 @@ export function SpaceEventStream() {
           lat: latVal,
           lng: lngVal,
           alt: altVal,
+          type: "iss",
+          label: `ISS now at ${latVal.toFixed(2)}°, ${lngVal.toFixed(2)}° — altitude ${altVal.toFixed(1)}km`,
         };
 
         setEvents((prev) => {
           const filtered = prev.filter((e) => e.id !== newEvent.id);
-          // Return last 5 entries sorted chronologically descending
-          return [newEvent, ...filtered].slice(0, 5);
+          return [newEvent, ...filtered].slice(0, 10);
         });
         setConnected(true);
         setError(false);
@@ -67,60 +92,69 @@ export function SpaceEventStream() {
   }, []);
 
   useEffect(() => {
+    // Fetch immediately on mount
     fetchISSEvents();
-    const interval = setInterval(fetchISSEvents, 10000); // 10 seconds polling
+    // Then poll every 30 seconds
+    const interval = setInterval(fetchISSEvents, 30000);
     return () => clearInterval(interval);
   }, [fetchISSEvents]);
+
+  const getEventIcon = (type: SpaceEvent["type"]) => {
+    if (type === "iss") return "🛸";
+    if (type === "satellite") return "🛰";
+    return "🌦";
+  };
+
+  const getEventColor = (type: SpaceEvent["type"]) => {
+    if (type === "iss") return "text-cyan-400";
+    if (type === "satellite") return "text-violet-400";
+    return "text-sky-400";
+  };
 
   return (
     <div className="flex flex-col h-[320px] min-h-[320px] overflow-hidden rounded-2xl border border-white/10 bg-slate-950/70 shadow-[0_8px_32px_rgba(0,0,0,0.6)] backdrop-blur-xl">
       <div className="p-4 border-b border-white/5 flex items-center justify-between bg-black/20 shrink-0">
         <div className="flex items-center gap-2">
-          <span className={`h-1.5 w-1.5 rounded-full ${connected ? "bg-emerald-500 animate-pulse" : "bg-amber-500 animate-ping"}`} />
+          {/* Red pulsing live badge */}
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400/80 opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500 live-badge" />
+          </span>
           <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-200 font-bold">
-            ISS Live Telemetry Log
+            Space Event Stream
           </span>
         </div>
         <span className="font-mono text-[8px] uppercase tracking-wider text-slate-400">
-          {connected ? "Live Stream" : "Connecting..."}
+          {connected ? "● Live" : error ? "⚠ Reconnecting" : "Connecting..."}
         </span>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 font-mono text-[10px] leading-relaxed">
-        {events.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-2 py-8">
-            <span className="h-4 w-4 rounded-full border-2 border-sky-500/20 border-t-sky-500 animate-spin" />
-            <p className="text-slate-400 animate-pulse text-[10px]">Connecting to ISS Stream...</p>
-          </div>
-        ) : (
-          events.map((e) => (
-            <div
-              key={e.id}
-              className="p-3 rounded-xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all grid grid-cols-2 gap-x-4 gap-y-2"
-            >
-              <div className="col-span-2 flex items-center justify-between border-b border-white/5 pb-1">
-                <span className="text-sky-400/80 font-bold uppercase tracking-wider text-[8px]">TIME UTC</span>
-                <span className="text-slate-300 font-semibold">{e.time}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-slate-500 text-[8px] uppercase tracking-wider">ISS Latitude</span>
-                <span className="text-slate-300 font-semibold mt-0.5">{e.lat.toFixed(4)}° {e.lat >= 0 ? "N" : "S"}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-slate-500 text-[8px] uppercase tracking-wider">ISS Longitude</span>
-                <span className="text-slate-300 font-semibold mt-0.5">{e.lng.toFixed(4)}° {e.lng >= 0 ? "E" : "W"}</span>
-              </div>
-              <div className="col-span-2 flex items-center justify-between border-t border-white/5 pt-1.5 mt-0.5">
-                <span className="text-slate-500 text-[8px] uppercase tracking-wider">Altitude</span>
-                <span className="text-emerald-400 font-semibold">{e.alt.toFixed(1)} km</span>
+      <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
+        {events.map((e) => (
+          <div
+            key={e.id}
+            className="p-2.5 rounded-xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all"
+          >
+            <div className="flex items-start gap-2">
+              <span className="text-sm shrink-0 mt-0.5">{getEventIcon(e.type)}</span>
+              <div className="min-w-0">
+                <p className={`font-mono text-[10px] font-semibold leading-snug ${getEventColor(e.type)}`}>
+                  {e.label}
+                </p>
+                <div className="flex items-center gap-3 mt-1 font-mono text-[8px] text-slate-500">
+                  <span>{e.time}</span>
+                  {e.type === "iss" && (
+                    <span className="text-emerald-400/70">alt: {e.alt.toFixed(1)}km</span>
+                  )}
+                </div>
               </div>
             </div>
-          ))
-        )}
+          </div>
+        ))}
       </div>
 
       <div className="px-4 py-2 border-t border-white/5 shrink-0 bg-black/10">
-        <p className="text-[9px] text-gray-500 font-mono">Telemetry Clock: {lastUpdated}</p>
+        <p className="text-[9px] text-gray-500 font-mono">Stream clock: {lastUpdated} · polling every 30s</p>
       </div>
     </div>
   );

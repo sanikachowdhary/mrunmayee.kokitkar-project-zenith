@@ -146,7 +146,7 @@ app/
 ### Setup
 
 ```bash
-git clone https://github.com/sanikachowdhary/mrunmayee.kokitkar-project-zenith
+git clone https://github.com/sanikachowdhary/mrunmayee.kokitkar-project-zenith.git
 cd mrunmayee.kokitkar-project-zenith
 npm install
 cp .env.example .env.local

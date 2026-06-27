@@ -27,8 +27,20 @@ import { LocationSearch } from "../../components/LocationSearch";
 import { APODDisplay } from "../../components/APODDisplay";
 import { useLocationStore, hydrateLocationStore } from "../../lib/api-client";
 import { useLiveTimestamp } from "../../lib/useLiveTimestamp";
+import { ErrorBoundary } from "../../components/ErrorBoundary";
 
 const FALLBACK_DATA = generateLocalTelemetryMock(19.076, 72.8777);
+
+// Skeleton card component to show while loading
+const SkeletonCard = () => (
+  <div className="animate-pulse rounded-xl bg-white/5 border border-white/10 p-4 h-32 flex flex-col justify-between">
+    <div>
+      <div className="h-4 bg-white/10 rounded w-1/3 mb-3"/>
+      <div className="h-8 bg-white/10 rounded w-1/2 mb-2"/>
+    </div>
+    <div className="h-3 bg-white/10 rounded w-2/3"/>
+  </div>
+);
 
 // Toast notification
 function Toast({ message, visible }: { message: string; visible: boolean }) {
@@ -78,6 +90,7 @@ function DashboardContent() {
   useEffect(() => {
     const urlLat = searchParams.get("lat");
     const urlLng = searchParams.get("lng");
+    const urlTime = searchParams.get("t");
     if (urlLat && urlLng) {
       const parsedLat = parseFloat(urlLat);
       const parsedLng = parseFloat(urlLng);
@@ -85,6 +98,9 @@ function DashboardContent() {
         setLocation(parsedLat, parsedLng);
         setLat(parsedLat);
         setLng(parsedLng);
+        if (urlTime) {
+          setCachedAt(new Date(urlTime).toISOString());
+        }
         return;
       }
     }
@@ -127,6 +143,13 @@ function DashboardContent() {
       setLocalData(mock);
       setZenithObject(getZenithObject(lat, lng));
 
+      // Add a 3-second timeout that forces isLoading = false regardless of API response
+      const forceTimeout = setTimeout(() => {
+        if (requestIdRef.current === currentRequestId) {
+          setLoading(false);
+        }
+      }, 3000);
+
       try {
         const [iss, sats, , wxData] = await Promise.all([
           fetchISSPosition({ signal: controller.signal }).catch((err) => {
@@ -164,6 +187,7 @@ function DashboardContent() {
         setError("API unavailable");
         setCachedAt((prev) => prev || new Date().toISOString());
       } finally {
+        clearTimeout(forceTimeout);
         if (requestIdRef.current === currentRequestId) {
           setLoading(false);
         }
@@ -194,9 +218,9 @@ function DashboardContent() {
 
   const handleCopySkyLink = () => {
     const timestamp = new Date().toISOString();
-    const link = `${window.location.origin}/dashboard?lat=${lat}&lng=${lng}&t=${timestamp}`;
+    const link = `https://mrunmayee-kokitkar-project-zenith.vercel.app/dashboard?lat=${lat}&lng=${lng}&t=${timestamp}`;
     navigator.clipboard.writeText(link).then(() => {
-      showToast("Sky link copied! Share with anyone.");
+      showToast("🔗 Sky link copied!");
     });
   };
 
@@ -251,11 +275,6 @@ function DashboardContent() {
           </div>
         </div>
 
-        {loading && (
-          <div className="rounded-2xl border border-sky-500/30 bg-sky-500/10 p-4 text-slate-100 text-sm font-mono">
-            Fetching fresh telemetry for {locationName} at {lat.toFixed(4)}, {lng.toFixed(4)}…
-          </div>
-        )}
         {error && (
           <p className="font-mono text-xs text-amber-400 text-center">
             Data unavailable — showing cache from{" "}
@@ -263,89 +282,126 @@ function DashboardContent() {
           </p>
         )}
 
-        {/* Zenith Object — full width */}
-        <div className="bg-yellow-100/10 border-2 border-yellow-500/50 p-6 rounded-2xl shadow-lg backdrop-blur-xl">
-          <h3 className="font-bold text-lg text-yellow-300">🎯 Projected Zenith Object</h3>
-          <p className="text-4xl font-bold text-yellow-400 mt-2">{zenithObject}</p>
-          <p className="text-sm text-slate-400 mt-2">
-            Predicted celestial body closest to zenith for {locationName}. Actual overhead alignment
-            is modeled from orbital and horizon data.
-          </p>
-          <p className="text-xs text-gray-500 mt-2 font-mono">Last updated: {lastUpdated}</p>
-        </div>
-
-        {/* Main grid: responsive */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {/* ISS Telemetry */}
-          <ISSPositionCard
-            data={issData ?? undefined}
-            loading={loading}
-            lastUpdated={lastUpdated}
-          />
-
-          {/* ISS Speed Tracker */}
-          <ISSSpeedCard lastUpdated={lastUpdated} />
-
-          {/* Cosmic Twin Score — spans 2 cols on lg */}
-          <div className="sm:col-span-2 lg:col-span-1">
-            <CosmicTwinScore
-              score={localData?.twinScore}
-              loading={loading}
-              lastUpdated={lastUpdated}
-              weather={weather ?? undefined}
-              lat={lat}
-            />
+        {loading ? (
+          /* Show 6 skeleton cards in a grid while loading */
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
           </div>
+        ) : (
+          <>
+            {/* Zenith Object — full width */}
+            <div className="bg-yellow-100/10 border-2 border-yellow-500/50 p-6 rounded-2xl shadow-lg backdrop-blur-xl">
+              <h3 className="font-bold text-lg text-yellow-300">🎯 Projected Zenith Object</h3>
+              <p className="text-4xl font-bold text-yellow-400 mt-2">{zenithObject}</p>
+              <p className="text-sm text-slate-400 mt-2">
+                Predicted celestial body closest to zenith for {locationName}. Actual overhead alignment
+                is modeled from orbital and horizon data.
+              </p>
+              <p className="text-xs text-gray-500 mt-2 font-mono">Last updated: {lastUpdated}</p>
+            </div>
 
-          {/* Observation Conditions */}
-          <ObservationConditions
-            data={weather ?? undefined}
-            loading={loading}
-            lastUpdated={lastUpdated}
-          />
+            {/* Main grid: responsive */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {/* ISS Telemetry */}
+              <ErrorBoundary>
+                <ISSPositionCard
+                  data={issData ?? undefined}
+                  loading={loading}
+                  lastUpdated={lastUpdated}
+                />
+              </ErrorBoundary>
 
-          {/* Visible Planets */}
-          <VisiblePlanetsCard
-            data={localData?.visiblePlanets}
-            loading={loading}
-            lastUpdated={lastUpdated}
-          />
+              {/* ISS Speed Tracker */}
+              <ErrorBoundary>
+                <ISSSpeedCard lastUpdated={lastUpdated} />
+              </ErrorBoundary>
 
-          {/* Active Satellites */}
-          <ActiveSatellitesCard
-            data={satData}
-            loading={loading}
-            lastUpdated={lastUpdated}
-          />
+              {/* Cosmic Twin Score — spans 2 cols on lg */}
+              <div className="sm:col-span-2 lg:col-span-1">
+                <ErrorBoundary>
+                  <CosmicTwinScore
+                    score={localData?.twinScore}
+                    loading={loading}
+                    lastUpdated={lastUpdated}
+                    weather={weather ?? undefined}
+                    lat={lat}
+                  />
+                </ErrorBoundary>
+              </div>
 
-          {/* ISS Pass Predictor */}
-          <PassPredictCard lat={lat} lng={lng} lastUpdated={lastUpdated} />
+              {/* Observation Conditions */}
+              <ErrorBoundary>
+                <ObservationConditions
+                  data={weather ?? undefined}
+                  loading={loading}
+                  lastUpdated={lastUpdated}
+                />
+              </ErrorBoundary>
 
-          {/* Zenith Object Card */}
-          <ZenithCard
-            issAlt={issData ? undefined : undefined}
-            lastUpdated={lastUpdated}
-          />
+              {/* Visible Planets */}
+              <ErrorBoundary>
+                <VisiblePlanetsCard
+                  data={localData?.visiblePlanets}
+                  loading={loading}
+                  lastUpdated={lastUpdated}
+                />
+              </ErrorBoundary>
 
-          {/* APOD — spans full width */}
-          <div className="sm:col-span-2 lg:col-span-3">
-            <APODDisplay />
-          </div>
-        </div>
+              {/* Active Satellites */}
+              <ErrorBoundary>
+                <ActiveSatellitesCard
+                  data={satData}
+                  loading={loading}
+                  lastUpdated={lastUpdated}
+                />
+              </ErrorBoundary>
+
+              {/* ISS Pass Predictor */}
+              <ErrorBoundary>
+                <PassPredictCard lat={lat} lng={lng} lastUpdated={lastUpdated} />
+              </ErrorBoundary>
+
+              {/* Zenith Object Card */}
+              <ErrorBoundary>
+                <ZenithCard
+                  issAlt={issData ? undefined : undefined}
+                  lastUpdated={lastUpdated}
+                />
+              </ErrorBoundary>
+
+              {/* APOD — spans full width */}
+              <div className="sm:col-span-2 lg:col-span-3">
+                <ErrorBoundary>
+                  <APODDisplay />
+                </ErrorBoundary>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </>
   );
 }
 
+const SuspenseSkeletonGrid = () => (
+  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto p-4 md:p-8">
+    <SkeletonCard />
+    <SkeletonCard />
+    <SkeletonCard />
+    <SkeletonCard />
+    <SkeletonCard />
+    <SkeletonCard />
+  </div>
+);
+
 export function DashboardLayout() {
   return (
-    <Suspense
-      fallback={
-        <div className="text-center py-20 font-mono text-slate-500">
-          Loading dashboard…
-        </div>
-      }
-    >
+    <Suspense fallback={<SuspenseSkeletonGrid />}>
       <DashboardContent />
     </Suspense>
   );

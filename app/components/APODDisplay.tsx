@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 interface APODData {
   title: string;
@@ -13,7 +14,7 @@ interface APODData {
   mediaType: "image" | "video";
 }
 
-export function APODDisplay() {
+function APODContent() {
   const [apod, setAPOD] = useState<APODData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,9 +45,10 @@ export function APODDisplay() {
   if (loading) {
     return (
       <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-6 backdrop-blur-xl animate-pulse">
-        <div className="h-64 bg-slate-800/50 rounded-lg mb-4" />
-        <div className="h-4 bg-slate-800/50 rounded w-3/4 mb-3" />
-        <div className="h-4 bg-slate-800/50 rounded w-1/2" />
+        <div className="animate-pulse space-y-2">
+          <div className="h-4 bg-white/10 rounded w-3/4" />
+          <div className="h-4 bg-white/10 rounded w-1/2" />
+        </div>
       </div>
     );
   }
@@ -59,13 +61,17 @@ export function APODDisplay() {
     );
   }
 
+  // Extract one-sentence excerpt of the explanation
+  const sentences = apod.explanation.split(/(?<=[.!?])\s+/);
+  const firstSentence = sentences[0] ? sentences[0].trim() : "";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="rounded-2xl border border-sky-500/20 bg-slate-950/70 p-6 backdrop-blur-xl overflow-hidden group"
     >
-      <div className="relative overflow-hidden rounded-lg mb-4 bg-black/40 aspect-video">
+      <div className="relative overflow-hidden rounded-lg mb-4 bg-black/40 aspect-video max-h-80">
         {apod.mediaType === "image" ? (
           <img
             src={apod.url}
@@ -102,8 +108,8 @@ export function APODDisplay() {
           </div>
         </div>
 
-        <p className="text-sm text-slate-300 leading-relaxed line-clamp-3">
-          {apod.explanation}
+        <p className="text-sm text-slate-300 leading-relaxed">
+          {firstSentence}
         </p>
 
         <div className="flex items-center justify-between text-xs text-slate-500 font-mono pt-2 border-t border-white/5">
@@ -133,5 +139,13 @@ export function APODDisplay() {
         </div>
       </div>
     </motion.div>
+  );
+}
+
+export function APODDisplay() {
+  return (
+    <ErrorBoundary>
+      <APODContent />
+    </ErrorBoundary>
   );
 }

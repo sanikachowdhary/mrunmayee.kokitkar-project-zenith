@@ -8,6 +8,38 @@ import { LocationSearch as DynamicLocationSearch } from "./components/LocationSe
 import { useLocationStore } from "./lib/api-client";
 import { APODDisplay } from "./components/APODDisplay";
 
+function AnimatedCounter({ value, duration = 1.5, formatter }: { value: number; duration?: number; formatter?: (v: number) => string }) {
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const end = value;
+    if (start === end) return;
+
+    const totalMiliseconds = duration * 1000;
+    const intervalTime = 30; // 30ms updates
+    const totalSteps = totalMiliseconds / intervalTime;
+    const increment = end / totalSteps;
+
+    let step = 0;
+    const timer = setInterval(() => {
+      step++;
+      setCurrent((prev) => {
+        const next = prev + increment;
+        if (step >= totalSteps || next >= end) {
+          clearInterval(timer);
+          return end;
+        }
+        return next;
+      });
+    }, intervalTime);
+
+    return () => clearInterval(timer);
+  }, [value, duration]);
+
+  return <>{formatter ? formatter(current) : Math.floor(current).toLocaleString()}</>;
+}
+
 /* ------------------------------------------------------------------ */
 /*  Animated Particle Canvas                                           */
 /* ------------------------------------------------------------------ */
@@ -151,10 +183,10 @@ function TelemetryBar() {
       className="mb-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 font-mono text-[11px] uppercase tracking-[0.25em]"
       style={{ color: "var(--text-muted)" }}
     >
-      <span className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[9px] text-emerald-400 font-bold uppercase tracking-wider">
+      <span className="flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[9px] text-red-400 font-bold uppercase tracking-wider">
         <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/80 opacity-75" />
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400/80 opacity-75" />
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-500 live-badge" />
         </span>
         LIVE stream
       </span>
@@ -323,7 +355,7 @@ export default function Page() {
   const [statsData, setStatsData] = useState({
     velocity: 27580,
     altitude: 418.5,
-    orbitsPerDay: 15.54,
+    orbitsPerDay: (24 * 60) / 92,
     activeSatellites: 9842
   });
 
@@ -352,11 +384,7 @@ export default function Page() {
           }
         }
 
-        const R = 6371;
-        const GM = 398600.4418;
-        const a = R + liveAltitude;
-        const T_seconds = 2 * Math.PI * Math.sqrt(Math.pow(a, 3) / GM);
-        const orbits = 86400 / T_seconds;
+        const orbits = (24 * 60) / 92;
 
         setStatsData({
           velocity: liveVelocity,
@@ -372,10 +400,10 @@ export default function Page() {
   }, []);
 
   const STATS_DYNAMIC = useMemo(() => [
-    { value: statsData.velocity.toLocaleString(undefined, { maximumFractionDigits: 0 }), unit: "km/h", label: "ISS orbital velocity" },
-    { value: statsData.altitude.toFixed(0), unit: "km", label: "Station altitude" },
-    { value: statsData.orbitsPerDay.toFixed(2) + "×", unit: "/ day", label: "Earth orbits completed" },
-    { value: statsData.activeSatellites.toLocaleString(), unit: "", label: "Active Satellites Tracked" },
+    { value: statsData.velocity, formatter: (v: number) => Math.floor(v).toLocaleString(), unit: "km/h", label: "ISS orbital velocity" },
+    { value: statsData.altitude, formatter: (v: number) => Math.floor(v).toFixed(0), unit: "km", label: "Station altitude" },
+    { value: statsData.orbitsPerDay, formatter: (v: number) => v.toFixed(2) + "×", unit: "/ day", label: "Earth orbits completed" },
+    { value: statsData.activeSatellites, formatter: (v: number) => Math.floor(v).toLocaleString(), unit: "", label: "Active Satellites Tracked" },
   ], [statsData]);
 
   return (
@@ -414,7 +442,7 @@ export default function Page() {
             variants={fadeUp}
             initial="hidden"
             animate="show"
-            className="text-[min(12vw,80px)] font-black leading-[1.1] tracking-tighter flex flex-col md:flex-row md:gap-x-5 justify-center items-center py-1 text-center"
+            className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-[1.1] tracking-tighter py-1 text-center flex flex-col items-center justify-center gap-1"
           >
             <span
               style={{
@@ -545,7 +573,7 @@ export default function Page() {
             >
               <div className="flex items-baseline gap-1.5">
                 <span className="text-3xl font-black sm:text-4xl" style={{ color: "var(--foreground)" }}>
-                  {s.value}
+                  <AnimatedCounter value={s.value} formatter={s.formatter} />
                 </span>
                 <span className="font-mono text-xs" style={{ color: "var(--accent)" }}>{s.unit}</span>
               </div>

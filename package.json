@@ -1,5 +1,5 @@
 {
-  "name": "project-zenith",
+  "name": "project-zenith-celestial-eye",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --webpack",

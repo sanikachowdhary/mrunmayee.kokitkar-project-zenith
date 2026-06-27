@@ -493,7 +493,7 @@ export function GlobeClient() {
       cesiumRef.current = Cesium;
       viewerRef.current = viewer;
 
-      issDataSourceRef.current = setupISSOrbit(viewer, Cesium);
+      issDataSourceRef.current = setupISSOrbit(viewer, Cesium, showOrbitTrail);
       issDataSourceRef.current.show = showISS;
 
       constellationsDataSourceRef.current = setupConstellations(viewer, Cesium);
@@ -560,6 +560,12 @@ export function GlobeClient() {
   useEffect(() => {
     if (orbitTrailRef.current) {
       orbitTrailRef.current.show = showOrbitTrail;
+    }
+    if (issDataSourceRef.current && cesiumRef.current) {
+      const issEntity = issDataSourceRef.current.entities.getById("ISS_PATH");
+      if (issEntity?.path) {
+        issEntity.path.show = new cesiumRef.current.ConstantProperty(showOrbitTrail);
+      }
     }
   }, [showOrbitTrail]);
 

@@ -3,7 +3,8 @@ import type { EciVec3 } from "satellite.js";
 
 export function setupISSOrbit(
   viewer: CesiumNS.Viewer,
-  Cesium: typeof CesiumNS
+  Cesium: typeof CesiumNS,
+  showPathTrail: boolean
 ): CesiumNS.CustomDataSource {
   const ds = new Cesium.CustomDataSource("ISS_ORBIT");
 
@@ -55,6 +56,7 @@ export function setupISSOrbit(
   }
 
   ds.entities.add({
+    id: "ISS_PATH",
     name: "International Space Station",
     position: positionProperty,
     point: {
@@ -64,6 +66,7 @@ export function setupISSOrbit(
       outlineWidth: 3,
     },
     path: {
+      show: showPathTrail,
       resolution: 1,
       material: new Cesium.PolylineGlowMaterialProperty({
         glowPower: 0.4,

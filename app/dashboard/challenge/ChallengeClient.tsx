@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useCallback } from "react";
 import Link from "next/link";
-import { useLocationStore } from "../../../lib/api-client";
+import { useLocationStore } from "../../lib/api-client";
 
 // Special named regions that are edge cases
 function getSpecialLocationName(lat: number, lng: number): string | null {

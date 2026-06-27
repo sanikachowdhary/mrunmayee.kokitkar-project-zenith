@@ -124,18 +124,18 @@ function getPlanetPositions(date: Date, coords: GeoCoords): PlanetPosition[] {
   gmst = ((gmst % 24) + 24) % 24;
   const lmst = ((gmst + coords.lng / 15) % 24 + 24) % 24;
 
-  function raDecToAltAz(ra_h: number, dec_deg: number): { alt: number; az: number } {
+  function raDecToAltAz(ra_h: number, dec_deg: number): { altitude: number; azimuth: number } {
     const decRad = dec_deg * (Math.PI / 180);
     const ha = ((lmst - ra_h) * 15) * (Math.PI / 180);
-    const alt = Math.asin(
+    const altitude = Math.asin(
       Math.sin(latRad) * Math.sin(decRad) +
       Math.cos(latRad) * Math.cos(decRad) * Math.cos(ha)
     ) * (180 / Math.PI);
-    const az = ((Math.atan2(
+    const azimuth = ((Math.atan2(
       -Math.sin(ha),
       Math.cos(latRad) * Math.tan(decRad) - Math.sin(latRad) * Math.cos(ha)
     ) * (180 / Math.PI)) + 360) % 360;
-    return { alt, az };
+    return { altitude, azimuth };
   }
 
   // Simplified planet mean longitudes and RA/Dec approximations

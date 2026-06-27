@@ -419,8 +419,8 @@ async function propagateOrbitPoints(
     const gmst = sat.gstime(t);
     const geo = sat.eciToGeodetic(pv.position as EciVec3<number>, gmst);
     results.push({
-      lat: sat.radiansToDegrees(geo.latitude),
-      lng: sat.radiansToDegrees(geo.longitude),
+      lat: geo.latitude * (180 / Math.PI),
+      lng: geo.longitude * (180 / Math.PI),
       altKm: geo.height,
     });
   }

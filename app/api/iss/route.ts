@@ -53,8 +53,8 @@ export async function GET() {
     const gmst = satellite.gstime(now);
     const positionGd = satellite.eciToGeodetic(positionAndVelocity.position as satellite.EciVec3<number>, gmst);
 
-    const lat = satellite.radiansToDegrees(positionGd.latitude);
-    const lng = satellite.radiansToDegrees(positionGd.longitude);
+    const lat = positionGd.latitude * (180 / Math.PI);
+    const lng = positionGd.longitude * (180 / Math.PI);
     const alt = positionGd.height; // in km
 
     const velEci = positionAndVelocity.velocity as satellite.EciVec3<number>;

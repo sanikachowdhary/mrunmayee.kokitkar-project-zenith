@@ -1,20 +1,39 @@
 // next.config.ts
 //
-// Required for CesiumJS to work in a Next.js build. Cesium ships its
-// Workers/, Assets/, ThirdParty/, and Widgets/ directories as static files
-// that must be served from the public root at runtime (it fetches them via
-// relative URLs, not bundled imports). copy-webpack-plugin copies them into
-// /public/cesium at build time; CESIUM_BASE_URL tells Cesium where to find
-// them in the browser.
+// Production builds use Webpack (via `next build --webpack` in package.json).
+// Dev uses Turbopack (via `next dev --turbopack`).
 //
-// npm install --save-dev copy-webpack-plugin
-
-// next.config.ts
+// Webpack config handles node: URI scheme fallbacks needed for any packages
+// that reference Node.js built-ins (e.g., satellite.js wasm builds).
+//
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  turbopack: {}, // explicit empty config silences the webpack/Turbopack warning
+  turbopack: {}, // used only for dev (next dev --turbopack)
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Handle node: URI scheme — browser can't use these, set to false
+      config.resolve = config.resolve || {};
+      config.resolve.fallback = {
+        ...(config.resolve.fallback || {}),
+        module: false,
+        worker_threads: false,
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+        path: false,
+        os: false,
+      };
+    }
+
+    // Silence unknown context critical warnings from large packages
+    config.module = config.module || {};
+    config.module.unknownContextCritical = false;
+
+    return config;
+  },
 };
 
 export default nextConfig;

@@ -1,10 +1,10 @@
 {
   "name": "project-zenith",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --turbopack",
+    "build": "next build --webpack",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint --no-turbopack"
   },
   "dependencies": {
     "@types/leaflet": "^1.9.21",
@@ -14,11 +14,12 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-leaflet": "^5.0.0",
-    "satellite.js": "^7.0.1",
+    "satellite.js": "^4.1.4",
     "use-debounce": "^10.1.1",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.5",
     "@tailwindcss/postcss": "^4.3.1",
     "@types/node": "^26.0.0",
     "@types/react": "^19.2.17",
@@ -40,5 +41,9 @@
     "@next/swc-linux-x64-musl": "16.2.9",
     "@next/swc-win32-arm64-msvc": "16.2.9",
     "@next/swc-win32-x64-msvc": "16.2.9"
+  },
+  "overrides": {
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
   }
 }

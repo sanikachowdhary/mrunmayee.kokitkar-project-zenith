@@ -90,8 +90,8 @@ function calculateISSPasses(
       gmst
     );
     const lookAngles = satellite.ecfToLookAngles(observerGd, posEcf);
-    const elDegrees = satellite.radiansToDegrees(lookAngles.elevation);
-    const azDegrees = satellite.radiansToDegrees(lookAngles.azimuth);
+    const elDegrees = lookAngles.elevation * (180 / Math.PI);
+    const azDegrees = lookAngles.azimuth * (180 / Math.PI);
 
     if (elDegrees >= 10) {
       if (!inPass) {

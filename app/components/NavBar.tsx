@@ -58,7 +58,7 @@ export function NavBar() {
           {/* Mobile Menu Toggle */}
           <button
             type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-full hover-scale text-slate-300 transition-colors hover:text-white md:hidden"
+            className="flex h-11 w-11 items-center justify-center rounded-full hover-scale text-slate-300 transition-colors hover:text-white md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

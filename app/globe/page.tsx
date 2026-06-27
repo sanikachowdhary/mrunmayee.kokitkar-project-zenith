@@ -3,7 +3,7 @@
 
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import type * as CesiumNS from "cesium";
-import { setupISSOrbit, setupConstellations, setupRadarSatellites, type SatelliteData } from "./_components/SpaceVisualizer";
+import { setupISSOrbit, setupConstellations, setupRadarSatellites, setupMultiSatelliteOrbits, MULTI_SAT_CONFIGS, type SatelliteData } from "./_components/SpaceVisualizer";
 import { SpaceEventStream } from "../components/SpaceEventStream";
 import { PresetButton, STARGAZING_PRESETS } from "../components/PresetButton";
 import { setupConstellationOverlay, setupOrbitalTrail } from "../components/ConstellationOverlay";
@@ -94,11 +94,15 @@ export default function GlobePage() {
     { id: "everest", label: "Fly to Mount Everest landmark preset", done: false, desc: "Use the landmark presets to inspect Everest's elevation." },
   ]);
 
+  // Mobile controls drawer
+  const [mobileControlsOpen, setMobileControlsOpen] = useState(false);
+
   const issDataSourceRef = useRef<CesiumNS.CustomDataSource | null>(null);
   const constellationsDataSourceRef = useRef<CesiumNS.CustomDataSource | null>(null);
   const radarDataSourceRef = useRef<CesiumNS.CustomDataSource | null>(null);
   const constellationOverlayRef = useRef<CesiumNS.CustomDataSource | null>(null);
   const orbitTrailRef = useRef<CesiumNS.CustomDataSource | null>(null);
+  const multiSatRef = useRef<CesiumNS.CustomDataSource | null>(null);
 
   // Sync ref for callback handlers to prevent stale closure issues
   const selectedRef = useRef<GeographicCoordinate | null>(null);
@@ -494,6 +498,11 @@ export default function GlobePage() {
       orbitTrailRef.current = setupOrbitalTrail(viewer, Cesium, showOrbitTrail);
 
       setIsLoading(false);
+
+      // Async: draw multi-satellite TLE orbits (non-blocking)
+      setupMultiSatelliteOrbits(viewer, Cesium)
+        .then((ds) => { multiSatRef.current = ds; })
+        .catch((err) => console.warn("[MultiSat] orbit setup failed:", err));
       } catch (err) {
         console.error("Cesium init failed:", err);
         setLoadError(err instanceof Error ? err.message : String(err));
@@ -747,6 +756,24 @@ export default function GlobePage() {
         id="zenith-cesium-credits"
         className="pointer-events-none absolute bottom-1 left-3 z-10 max-w-[40vw] truncate text-[8px] text-slate-500/50 font-mono"
       />
+
+      {/* ── Multi-Satellite Legend Overlay ── */}
+      {!isLoading && (
+        <div className="pointer-events-none absolute bottom-6 right-6 z-30 rounded-xl border border-white/10 bg-slate-950/80 backdrop-blur-xl p-3 flex flex-col gap-1.5">
+          <p className="font-mono text-[8px] uppercase tracking-widest text-slate-500 mb-1">Orbit Paths</p>
+          {MULTI_SAT_CONFIGS.map((sat) => (
+            <div key={sat.norad} className="flex items-center gap-2">
+              <span className="block h-1.5 w-5 rounded-full" style={{ backgroundColor: sat.color }} />
+              <span className="font-mono text-[9px] text-slate-300">{sat.name}</span>
+            </div>
+          ))}
+          <div className="flex items-center gap-2 mt-1 pt-1 border-t border-white/5">
+            <span className="block h-1.5 w-5 rounded-full bg-cyan-400" />
+            <span className="font-mono text-[9px] text-cyan-300">ISS</span>
+          </div>
+        </div>
+      )}
+
 
       {/* ── Loading Overlay ── */}
       {(isLoading || loadError) && (
@@ -1275,6 +1302,64 @@ export default function GlobePage() {
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
+      </div>
+
+      {/* ── Mobile: Controls Toggle Button ── */}
+      <button
+        type="button"
+        onClick={() => setMobileControlsOpen((o) => !o)}
+        className="lg:hidden pointer-events-auto fixed bottom-6 left-4 z-[60] flex items-center gap-2 rounded-full border border-white/20 bg-slate-950/80 backdrop-blur-xl px-4 py-2.5 font-mono text-[10px] uppercase tracking-widest text-slate-200 shadow-xl cursor-pointer transition-all hover:border-sky-400/30"
+      >
+        ⚙️ Controls
+      </button>
+
+      {/* ── Mobile: Bottom Drawer ── */}
+      <div
+        className={`lg:hidden fixed inset-x-0 bottom-0 z-[55] pointer-events-auto transition-transform duration-300 ${
+          mobileControlsOpen ? "translate-y-0" : "translate-y-full"
+        }`}
+      >
+        <div className="rounded-t-2xl border-t border-white/10 bg-slate-950/95 backdrop-blur-xl p-5 max-h-[70vh] overflow-y-auto">
+          <div className="flex items-center justify-between mb-4">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-slate-400">Globe Controls</span>
+            <button
+              type="button"
+              onClick={() => setMobileControlsOpen(false)}
+              className="text-slate-400 hover:text-white cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="flex flex-col gap-3">
+            {[
+              { label: "🌙 Night Mode",     checked: isNightMode,             set: setIsNightMode },
+              { label: "✨ Constellation Lines", checked: showConstellationOverlay, set: setShowConstellationOverlay },
+              { label: "🛰 Orbit Trail",    checked: showOrbitTrail,          set: setShowOrbitTrail },
+              { label: "Satellite Radar",   checked: showRadar,               set: (v: boolean) => { setShowRadar(v); setSelectedSatellite(null); } },
+              { label: "Auto-Rotation",     checked: autoRotate,              set: setAutoRotate },
+              { label: "ISS Tracking",      checked: showISS,                 set: setShowISS },
+            ].map(({ label, checked, set }) => (
+              <div key={label} className="flex items-center justify-between border-b border-white/5 pb-2">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-slate-400">{label}</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" checked={checked} onChange={(e) => set(e.target.checked)} className="sr-only peer" />
+                  <div className="w-9 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-500" />
+                </label>
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-2 mt-4">
+            {STARGAZING_PRESETS.slice(0, 4).map((preset) => (
+              <PresetButton
+                key={preset.name}
+                preset={preset}
+                viewerRef={viewerRef}
+                cesiumRef={cesiumRef}
+                onSelect={() => setMobileControlsOpen(false)}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </main>
   );

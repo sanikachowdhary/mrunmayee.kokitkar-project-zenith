@@ -2,46 +2,55 @@ import { NextResponse } from "next/server";
 import * as satellite from "satellite.js";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 0; // live predictions, no cache
+export const revalidate = 0;
 
-interface ISSPass {
-  rise_time: number;
-  visible_seconds: number;
-  max_elevation: number;
+// Cache for 5 minutes
+const CACHE_TTL_MS = 5 * 60 * 1000;
+let cachedPasses: { data: PassResult; lat: number; lng: number; timestamp: number } | null = null;
+
+interface PassResult {
+  passes: ISSPass[];
 }
 
-interface PassPrediction {
-  passes: ISSPass[];
-  message: string;
-  request: {
-    latitude: number;
-    longitude: number;
-    altitude: number;
-  };
+interface ISSPass {
+  riseTime: string;       // UTC ISO string
+  maxElevation: number;   // degrees
+  duration: number;       // seconds
+  direction: string;      // compass direction
 }
 
 async function fetchISSTLE(): Promise<[string, string]> {
   try {
-    const res = await fetch("https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=TLE", {
-      next: { revalidate: 1800 } // Cache TLE for 30 minutes
-    });
+    const res = await fetch(
+      "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=TLE",
+      { next: { revalidate: 1800 } }
+    );
     if (!res.ok) throw new Error(`CelesTrak status: ${res.status}`);
     const text = await res.text();
-    const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
-    
-    // Find ZARYA/ISS index. CelesTrak returns 3 lines: Name, Line 1, Line 2.
+    const lines = text
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
     if (lines.length >= 3) {
       return [lines[1], lines[2]];
     }
+    if (lines.length >= 2 && lines[0].startsWith("1 ")) {
+      return [lines[0], lines[1]];
+    }
     throw new Error("Invalid TLE response format");
   } catch (error) {
-    console.warn("Failed to fetch live TLE from CelesTrak, using fallback:", error);
-    // Recent TLE for ISS (approximate but extremely close)
+    console.warn("Failed to fetch live TLE, using fallback:", error);
     return [
       "1 25544U 98067A   26177.58156177  .00017006  00000-0  30188-3 0  9990",
-      "2 25544  51.6416  60.2917 0005234 321.8415  38.2588 15.49845341573983"
+      "2 25544  51.6416  60.2917 0005234 321.8415  38.2588 15.49845341573983",
     ];
   }
+}
+
+function azimuthToCompass(azDeg: number): string {
+  const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  const idx = Math.round(azDeg / 45) % 8;
+  return dirs[idx];
 }
 
 function calculateISSPasses(
@@ -52,38 +61,44 @@ function calculateISSPasses(
   windowHours = 24
 ): ISSPass[] {
   const satrec = satellite.twoline2satrec(line1, line2);
-  const observerGd = {
+  const observerGd: satellite.GeodeticLocation = {
     latitude: satellite.degreesToRadians(obsLat),
     longitude: satellite.degreesToRadians(obsLng),
-    height: 0.1 // 100 meters above sea level
+    height: 0.1,
   };
 
   const passes: ISSPass[] = [];
   let inPass = false;
-  let passStartSec = 0;
+  let passStartMs = 0;
   let maxEl = 0;
+  let riseAzDeg = 0;
 
   const now = new Date();
   const startTimeMs = now.getTime();
-  const stepSeconds = 15; // sample every 15 seconds
-  const totalSteps = (windowHours * 3600) / stepSeconds;
+  const stepSeconds = 10;
+  const totalSteps = Math.floor((windowHours * 3600) / stepSeconds);
 
-  for (let i = 0; i < totalSteps; i++) {
+  for (let i = 0; i < totalSteps && passes.length < 5; i++) {
     const time = new Date(startTimeMs + i * stepSeconds * 1000);
     const posVel = satellite.propagate(satrec, time);
-    if (!posVel || !posVel.position || typeof posVel.position === "boolean") continue;
+    if (!posVel || !posVel.position || typeof posVel.position === "boolean")
+      continue;
 
     const gmst = satellite.gstime(time);
-    const posEcf = satellite.eciToEcf(posVel.position as satellite.EciVec3<number>, gmst);
+    const posEcf = satellite.eciToEcf(
+      posVel.position as satellite.EciVec3<number>,
+      gmst
+    );
     const lookAngles = satellite.ecfToLookAngles(observerGd, posEcf);
     const elDegrees = satellite.radiansToDegrees(lookAngles.elevation);
+    const azDegrees = satellite.radiansToDegrees(lookAngles.azimuth);
 
-    // Consider visible if elevation is above 10 degrees
     if (elDegrees >= 10) {
       if (!inPass) {
         inPass = true;
-        passStartSec = Math.floor(time.getTime() / 1000);
+        passStartMs = time.getTime();
         maxEl = elDegrees;
+        riseAzDeg = azDegrees;
       } else {
         if (elDegrees > maxEl) {
           maxEl = elDegrees;
@@ -92,16 +107,18 @@ function calculateISSPasses(
     } else {
       if (inPass) {
         inPass = false;
-        const endSec = Math.floor(time.getTime() / 1000);
-        const duration = endSec - passStartSec;
+        const endMs = time.getTime();
+        const duration = Math.round((endMs - passStartMs) / 1000);
         if (duration > 30) {
           passes.push({
-            rise_time: passStartSec,
-            visible_seconds: duration,
-            max_elevation: maxEl
+            riseTime: new Date(passStartMs).toISOString(),
+            maxElevation: Math.round(maxEl),
+            duration,
+            direction: azimuthToCompass(riseAzDeg),
           });
         }
         maxEl = 0;
+        riseAzDeg = 0;
       }
     }
   }
@@ -109,31 +126,11 @@ function calculateISSPasses(
   return passes;
 }
 
-function formatPassPrediction(passes: ISSPass[]): string {
-  if (passes.length === 0) {
-    return "NO - No visible passes predicted in the next 24 hours.";
-  }
-
-  const firstPass = passes[0];
-  const riseTime = new Date(firstPass.rise_time * 1000);
-  const durationMinutes = Math.round(firstPass.visible_seconds / 60);
-  const maxElevation = Math.round(firstPass.max_elevation);
-
-  const timeUntilPass = riseTime.getTime() - Date.now();
-  const hoursUntil = Math.floor(timeUntilPass / (1000 * 60 * 60));
-  const minutesUntil = Math.floor((timeUntilPass % (1000 * 60 * 60)) / (1000 * 60));
-
-  const hoursStr = hoursUntil > 0 ? `${hoursUntil}h ` : "";
-  const minutesStr = `${minutesUntil}m`;
-
-  return `YES - Next pass in ${hoursStr}${minutesStr} at ${maxElevation}° elevation for ${durationMinutes}min.`;
-}
-
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const lat = searchParams.get("lat");
-    const lon = searchParams.get("lon");
+    const lon = searchParams.get("lon") ?? searchParams.get("lng");
 
     if (!lat || !lon) {
       return NextResponse.json(
@@ -152,36 +149,43 @@ export async function GET(request: Request) {
       );
     }
 
-    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+    if (
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
       return NextResponse.json(
-        { error: "Latitude must be between -90 and 90, longitude between -180 and 180" },
+        { error: "Latitude or longitude out of range" },
         { status: 400 }
       );
     }
 
-    // 1. Fetch live TLE data
-    const [line1, line2] = await fetchISSTLE();
+    // 5-minute cache (same location ±0.5°)
+    const now = Date.now();
+    if (
+      cachedPasses &&
+      now - cachedPasses.timestamp < CACHE_TTL_MS &&
+      Math.abs(cachedPasses.lat - latitude) < 0.5 &&
+      Math.abs(cachedPasses.lng - longitude) < 0.5
+    ) {
+      return NextResponse.json(cachedPasses.data);
+    }
 
-    // 2. Propagate and find passes for the next 24 hours
+    const [line1, line2] = await fetchISSTLE();
     const passes = calculateISSPasses(line1, line2, latitude, longitude, 24);
 
-    // 3. Format the result
-    const prediction = formatPassPrediction(passes);
+    const result: PassResult = { passes };
+    cachedPasses = {
+      data: result,
+      lat: latitude,
+      lng: longitude,
+      timestamp: now,
+    };
 
-    return NextResponse.json({
-      prediction,
-      raw: {
-        passes,
-        message: "success",
-        request: {
-          latitude,
-          longitude,
-          altitude: 0
-        }
-      }
-    });
+    return NextResponse.json(result);
   } catch (error) {
-    console.error("Failed to calculate SGP4 ISS pass predictions:", error);
+    console.error("Failed to calculate ISS pass predictions:", error);
     return NextResponse.json(
       { error: "Failed to calculate ISS pass predictions" },
       { status: 500 }

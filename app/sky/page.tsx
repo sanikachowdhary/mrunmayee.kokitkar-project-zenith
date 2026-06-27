@@ -1,11 +1,18 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams } from "next/navigation";
 import { LocationSearch } from "../components/LocationSearch";
 import { TimelineControls, getModeLabel } from "../components/TimelineControls";
 import { useLocationStore, hydrateLocationStore } from "../lib/api-client";
 import { useLiveTimestamp } from "../lib/useLiveTimestamp";
+import dynamic from "next/dynamic";
+
+const SkyDomeCanvas = dynamic(
+  () => import("./_components/SkyDomeCanvas").then(m => ({ default: m.SkyDomeCanvas })),
+  { ssr: false }
+);
 
 /* ------------------------------------------------------------------ */
 /* Types & Math                                                        */
@@ -394,9 +401,10 @@ function MetricRow({ label, value, unit }: { label: string; value: string; unit?
 /* Main Page                                                           */
 /* ------------------------------------------------------------------ */
 
-export default function SkyTimeMachine() {
+function SkyTimeMachineContent() {
   const { latitude, longitude, locationName, setLocation } = useLocationStore();
   const lastUpdated = useLiveTimestamp(5000);
+  const searchParams = useSearchParams();
   const now = useMemo(() => new Date(), []);
 
   const [lat, setLat] = useState(latitude);
@@ -408,9 +416,30 @@ export default function SkyTimeMachine() {
   const [activeDate, setActiveDate] = useState<Date>(now);
   const [skyData, setSkyData] = useState<SkyData | null>(() => calculateSkyData(now, { lat: latitude, lng: longitude }));
   const [transitionKey, setTransitionKey] = useState(0);
+  const [toastVisible, setToastVisible] = useState(false);
 
   useEffect(() => {
     hydrateLocationStore();
+  }, []);
+
+  // Read URL params on mount to restore shared sky links
+  useEffect(() => {
+    const urlLat = searchParams.get("lat");
+    const urlLng = searchParams.get("lng");
+    const urlDate = searchParams.get("date");
+    const urlTime = searchParams.get("time");
+    if (urlLat && urlLng) {
+      const pLat = parseFloat(urlLat);
+      const pLng = parseFloat(urlLng);
+      if (!isNaN(pLat) && !isNaN(pLng)) {
+        setLat(pLat);
+        setLng(pLng);
+        setLocation(pLat, pLng);
+      }
+    }
+    if (urlDate) setBaseDate(urlDate);
+    if (urlTime) setBaseTime(urlTime);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -444,8 +473,26 @@ export default function SkyTimeMachine() {
     setTransitionKey((p) => p + 1);
   };
 
+  const handleShareSky = useCallback(() => {
+    const url = `${window.location.origin}/sky?lat=${lat}&lng=${lng}&date=${baseDate}&time=${baseTime}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setToastVisible(true);
+      setTimeout(() => setToastVisible(false), 2500);
+    });
+  }, [lat, lng, baseDate, baseTime]);
+
   return (
     <main className="flex-1 page-with-nav flex flex-col overflow-hidden" style={{ background: "#030409" }}>
+      {/* Toast */}
+      <div
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] transition-all duration-300"
+        style={{ opacity: toastVisible ? 1 : 0, transform: `translateX(-50%) translateY(${toastVisible ? 0 : 20}px)`, pointerEvents: toastVisible ? "auto" : "none" }}
+      >
+        <div className="rounded-full border border-emerald-500/30 bg-slate-950/90 backdrop-blur-xl px-6 py-3 shadow-2xl flex items-center gap-2">
+          <span className="text-emerald-400">🔗</span>
+          <span className="font-mono text-[11px] text-slate-200">Sky link copied to clipboard!</span>
+        </div>
+      </div>
 
       {/* ── Title bar ── */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-white/5 backdrop-blur-xl bg-slate-950/60">
@@ -458,22 +505,31 @@ export default function SkyTimeMachine() {
             </p>
           </div>
         </div>
-        <AnimatePresence mode="wait">
-          <motion.span
-            key={modeLabel}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            className="rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-widest border"
-            style={{
-              color: modeLabel === "Historical Mode" ? "#fbbf24" : modeLabel === "Future Mode" ? "#a78bfa" : "#34d399",
-              borderColor: modeLabel === "Historical Mode" ? "rgba(251,191,36,0.3)" : modeLabel === "Future Mode" ? "rgba(167,139,250,0.3)" : "rgba(52,211,153,0.3)",
-              backgroundColor: modeLabel === "Historical Mode" ? "rgba(251,191,36,0.08)" : modeLabel === "Future Mode" ? "rgba(167,139,250,0.08)" : "rgba(52,211,153,0.08)",
-            }}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleShareSky}
+            className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 px-3 py-1.5 font-mono text-[9px] uppercase tracking-widest text-slate-300 transition-colors cursor-pointer"
           >
-            {modeLabel === "Live Mode" ? "● Live Mode" : modeLabel === "Historical Mode" ? "◀ Historical Mode" : "▶ Future Mode"}
-          </motion.span>
-        </AnimatePresence>
+            📋 Share This Sky
+          </button>
+          <AnimatePresence mode="wait">
+            <motion.span
+              key={modeLabel}
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              className="rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-widest border"
+              style={{
+                color: modeLabel === "Historical Mode" ? "#fbbf24" : modeLabel === "Future Mode" ? "#a78bfa" : "#34d399",
+                borderColor: modeLabel === "Historical Mode" ? "rgba(251,191,36,0.3)" : modeLabel === "Future Mode" ? "rgba(167,139,250,0.3)" : "rgba(52,211,153,0.3)",
+                backgroundColor: modeLabel === "Historical Mode" ? "rgba(251,191,36,0.08)" : modeLabel === "Future Mode" ? "rgba(167,139,250,0.08)" : "rgba(52,211,153,0.08)",
+              }}
+            >
+              {modeLabel === "Live Mode" ? "● Live Mode" : modeLabel === "Historical Mode" ? "◀ Historical Mode" : "▶ Future Mode"}
+            </motion.span>
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* ── Main layout ── */}
@@ -691,8 +747,27 @@ export default function SkyTimeMachine() {
               </div>
             </div>
           </div>
+
+          {/* 2D Sky Dome Canvas */}
+          <div className="border-t border-white/5 bg-slate-950/80 backdrop-blur-xl p-5">
+            <div className="rounded-2xl border border-white/10 bg-black/40 p-4">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">
+                <span className="block h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                2D Sky Dome — {locName} · {activeDate.toDateString()}
+              </p>
+              <SkyDomeCanvas lat={lat} lng={lng} date={activeDate} />
+            </div>
+          </div>
         </div>
       </div>
     </main>
+  );
+}
+
+export default function SkyTimeMachine() {
+  return (
+    <Suspense fallback={<div className="flex-1 page-with-nav flex items-center justify-center"><p className="font-mono text-slate-500">Loading sky machine...</p></div>}>
+      <SkyTimeMachineContent />
+    </Suspense>
   );
 }

@@ -1,4 +1,5 @@
 import type * as CesiumNS from "cesium";
+import type { EciVec3 } from "satellite.js";
 
 export function setupISSOrbit(
   viewer: CesiumNS.Viewer,
@@ -350,5 +351,122 @@ export function setupRadarSatellites(
   });
 
   viewer.dataSources.add(ds);
+  return ds;
+}
+
+// ─── Multi-Satellite Orbit Paths via SGP4 ──────────────────────────────────
+
+export interface MultiSatConfig {
+  name: string;
+  norad: number;
+  color: string;
+  width: number;
+}
+
+export const MULTI_SAT_CONFIGS: MultiSatConfig[] = [
+  { name: "Hubble",      norad: 20580, color: "#3b82f6", width: 2 },
+  { name: "Tiangong",    norad: 48274, color: "#eab308", width: 2 },
+  { name: "Starlink",    norad: 44713, color: "#22d3ee", width: 1.5 },
+  { name: "Sentinel-2A", norad: 40697, color: "#22c55e", width: 1.5 },
+  { name: "NOAA-19",     norad: 33591, color: "#f97316", width: 1.5 },
+];
+
+async function fetchTLEForSat(norad: number): Promise<[string, string] | null> {
+  try {
+    const res = await fetch(
+      `https://celestrak.org/NORAD/elements/gp.php?CATNR=${norad}&FORMAT=TLE`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    const lines = text.split("\n").map((l: string) => l.trim()).filter(Boolean);
+    if (lines.length >= 3) return [lines[1], lines[2]];
+    if (lines.length >= 2 && lines[0].startsWith("1 ")) return [lines[0], lines[1]];
+    throw new Error("Bad TLE format");
+  } catch (err) {
+    console.warn(`[MultiSat] TLE fetch failed for NORAD ${norad}:`, err);
+    return null;
+  }
+}
+
+function parseTleEpoch(line1: string): Date {
+  const epochStr = line1.substring(18, 32).trim();
+  const year2 = parseInt(epochStr.substring(0, 2));
+  const year = year2 >= 57 ? 1900 + year2 : 2000 + year2;
+  const dayOfYear = parseFloat(epochStr.substring(2));
+  const d = new Date(Date.UTC(year, 0, 1));
+  d.setUTCDate(d.getUTCDate() + Math.floor(dayOfYear) - 1);
+  const fracDay = dayOfYear - Math.floor(dayOfYear);
+  d.setUTCSeconds(Math.round(fracDay * 86400));
+  return d;
+}
+
+async function propagateOrbitPoints(
+  line1: string,
+  line2: string,
+  numPoints: number,
+  stepMinutes: number
+): Promise<{ lat: number; lng: number; altKm: number }[]> {
+  const sat = await import("satellite.js");
+  const satrec = sat.twoline2satrec(line1, line2);
+  const epoch = parseTleEpoch(line1);
+  const results: { lat: number; lng: number; altKm: number }[] = [];
+
+  for (let i = 0; i < numPoints; i++) {
+    const t = new Date(epoch.getTime() + i * stepMinutes * 60 * 1000);
+    const pv = sat.propagate(satrec, t);
+    if (!pv || !pv.position || typeof pv.position === "boolean") continue;
+    const gmst = sat.gstime(t);
+    const geo = sat.eciToGeodetic(pv.position as EciVec3<number>, gmst);
+    results.push({
+      lat: sat.radiansToDegrees(geo.latitude),
+      lng: sat.radiansToDegrees(geo.longitude),
+      altKm: geo.height,
+    });
+  }
+  return results;
+}
+
+export async function setupMultiSatelliteOrbits(
+  viewer: CesiumNS.Viewer,
+  Cesium: typeof CesiumNS
+): Promise<CesiumNS.CustomDataSource> {
+  const ds = new Cesium.CustomDataSource("MULTI_SAT_ORBITS");
+  viewer.dataSources.add(ds);
+
+  await Promise.all(
+    MULTI_SAT_CONFIGS.map(async (cfg) => {
+      try {
+        const tle = await fetchTLEForSat(cfg.norad);
+        if (!tle) return;
+        const [line1, line2] = tle;
+
+        const points = await propagateOrbitPoints(line1, line2, 96, 1);
+        if (points.length < 2) return;
+
+        const positions = points.map((p) =>
+          Cesium.Cartesian3.fromDegrees(p.lng, p.lat, p.altKm * 1000)
+        );
+
+        const cesColor = Cesium.Color.fromCssColorString(cfg.color).withAlpha(0.7);
+
+        ds.entities.add({
+          name: `${cfg.name} Orbit`,
+          polyline: {
+            positions,
+            width: cfg.width,
+            material: new Cesium.PolylineGlowMaterialProperty({
+              glowPower: 0.15,
+              color: cesColor,
+            }),
+            arcType: Cesium.ArcType.NONE,
+          },
+        });
+      } catch (err) {
+        console.warn(`[MultiSat] Failed to draw orbit for ${cfg.name}:`, err);
+      }
+    })
+  );
+
   return ds;
 }

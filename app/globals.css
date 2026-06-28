@@ -19,13 +19,6 @@
   --glass-blur: 24px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
@@ -120,6 +113,7 @@ body {
 /* ── Custom Range Scrubber ── */
 input[type=range].zenith-scrubber {
   -webkit-appearance: none;
+  appearance: none;
   background: transparent;
 }
 input[type=range].zenith-scrubber::-webkit-slider-thumb {
